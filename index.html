@@ -1,0 +1,1538 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CLOK — 흩어진 기록을 찾고, 알리고, 정리까지</title>
+<meta name="description" content="보이지 않던 내 정보를 한눈에 보여 주고 버튼 몇 번으로 정리하는 개인정보 보호 앱 CLOK · 2026 한세대학교 시각정보디자인학과 졸업전시">
+<link rel="icon" href="assets/app-icon.svg">
+<link rel="preload" href="assets/fonts/LINESeedKR-Bd.woff2" as="font" type="font/woff2" crossorigin>
+<noscript><style>.hero-in>*,.rv{opacity:1!important;transform:none!important}.hero-logo.hide img{opacity:1!important}</style></noscript>
+<style>
+@font-face{font-family:"LINE Seed Sans KR";font-weight:100;font-display:swap;src:local("LINE Seed Sans KR Thin"),url(assets/fonts/LINESeedKR-Th.woff2) format("woff2")}
+@font-face{font-family:"LINE Seed Sans KR";font-weight:400;font-display:swap;src:local("LINE Seed Sans KR Regular"),url(assets/fonts/LINESeedKR-Rg.woff2) format("woff2")}
+@font-face{font-family:"LINE Seed Sans KR";font-weight:700;font-display:swap;src:local("LINE Seed Sans KR Bold"),url(assets/fonts/LINESeedKR-Bd.woff2) format("woff2")}
+
+:root{
+  --cyan-50:#E6F9FC;--cyan-100:#C2F1F7;--cyan-300:#51E5F5;--cyan-500:#01BED7;--cyan-700:#0B8FA0;
+  --gray-50:#F4F7F8;--gray-400:#9AA0A2;--gray-600:#5F6669;--gray-900:#1A1C1C;--ink-2:#444748;
+  /* 작은 글씨 전용: 브랜드 색(cyan 700, gray 400)은 흰 배경에서 대비가 부족해 한 단계 어둡게 */
+  --cyan-text:#08727F;--gray-500:#626A6D;
+  --red:#FF4B4B;--line:#E3E8EA;--line-2:#D3D9DB;
+  --grad:linear-gradient(90deg,var(--cyan-500),var(--cyan-300));
+  --u:min(100vw,1920px);
+  --gutter:max(20px,calc(var(--u)*.1115));      /* 1492 컨테이너 */
+  --gutter-s:max(20px,calc(var(--u)*.1875));    /* 1200 컨테이너 */
+  --gutter-f:max(20px,calc(var(--u)*.1771));    /* 1240 컨테이너 */
+  --ease:cubic-bezier(.22,1,.36,1);
+  --nav-h:64px;
+  --glass:linear-gradient(135deg,rgba(255,255,255,.75),rgba(255,255,255,.42));
+}
+@media (max-width:900px){:root{--gutter:22px;--gutter-s:22px;--gutter-f:22px}}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth;overflow-x:clip;-webkit-text-size-adjust:100%}
+body{margin:0;overflow-x:clip;background:#fff;color:var(--gray-900);font-family:"LINE Seed Sans KR",system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased;word-break:keep-all}
+img{display:block;max-width:none}
+h1,h2,h3,h4,p,ol,ul,figure{margin:0;padding:0}
+ol,ul{list-style:none}
+button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:pointer}
+a{color:inherit;text-decoration:none}
+:focus-visible{outline:2px solid var(--cyan-500);outline-offset:3px;border-radius:6px}
+.wrap{width:min(100% - var(--gutter)*2,1492px);margin-inline:auto}
+.wrap-s{width:min(100% - var(--gutter-s)*2,1200px);margin-inline:auto}
+.wrap-f{width:min(100% - var(--gutter-f)*2,1240px);margin-inline:auto}
+section{scroll-margin-top:var(--nav-h)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+
+.rv{opacity:0;transform:translateY(22px);transition:opacity .8s var(--ease),transform .8s var(--ease);transition-delay:var(--d,0s)}
+.rv.in{opacity:1;transform:none}
+
+/* ── heads ────────────────────────── */
+.head{text-align:center}
+.eyebrow{font-weight:700;font-size:16px;line-height:23px;letter-spacing:.08em;color:var(--cyan-text)}
+.title{font-weight:700;font-size:clamp(25px,calc(var(--u)*.0198),38px);line-height:1.3;letter-spacing:-.015em;margin-top:6px;text-wrap:balance}
+.tag{display:inline-flex;align-items:center;gap:12px;font-size:13px;line-height:20px;color:var(--gray-500)}
+.tag::before{content:"";width:3px;height:20px;background:var(--cyan-500)}
+.tag b{letter-spacing:.08em;color:var(--cyan-text)}
+.glass{background:var(--glass);border:1px solid rgba(255,255,255,.95);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);box-shadow:0 12px 32px rgba(0,51,61,.08)}
+
+/* ── nav ──────────────────────────── */
+.nav{position:fixed;inset:0 0 auto 0;z-index:50;height:var(--nav-h);transition:background .3s,box-shadow .3s}
+.nav.stuck{background:rgba(255,255,255,.82);backdrop-filter:saturate(1.4) blur(14px);-webkit-backdrop-filter:saturate(1.4) blur(14px);box-shadow:0 1px 0 rgba(26,28,28,.07)}
+.nav .wrap{height:100%;display:flex;align-items:center;justify-content:space-between;gap:24px}
+.nav-logo{opacity:0;transform:translateY(-6px);transition:opacity .3s,transform .3s;pointer-events:none}
+.nav.stuck .nav-logo{opacity:1;transform:none;pointer-events:auto}
+.nav-logo img{height:26px;width:auto}
+.nav-links{display:flex;gap:clamp(12px,1.8vw,30px);padding:4px 20px;border-radius:999px;background:rgba(255,255,255,.55);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);font-weight:700;font-size:14px;letter-spacing:.02em;transition:background .3s}
+.nav.stuck .nav-links{background:transparent;backdrop-filter:none;-webkit-backdrop-filter:none}
+.nav-links a{position:relative;padding:8px 0;color:var(--gray-600);transition:color .2s}
+.nav-links a:hover,.nav-links a.on{color:var(--gray-900)}
+.nav-links a::after{content:"";position:absolute;left:0;right:0;bottom:2px;height:2px;border-radius:2px;background:var(--grad);transform:scaleX(0);transform-origin:left;transition:transform .35s var(--ease)}
+.nav-links a.on::after{transform:scaleX(1)}
+.progress{position:absolute;left:0;bottom:-2px;height:2px;width:100%;background:var(--grad);transform-origin:left;transform:scaleX(0)}
+@media (max-width:860px){.nav-links{display:none}}
+
+/* ── side navigation ──────────────── */
+.side{position:fixed;right:16px;top:50%;translate:0 -50%;z-index:40;display:flex;flex-direction:column;align-items:flex-end;gap:8px;color:var(--gray-900)}
+.side ol{display:grid;gap:0}
+.side a{display:flex;align-items:center;justify-content:flex-end;gap:10px;min-height:20px;padding:0 11px 0 0}
+.side a i{flex:none;width:7px;height:7px;border-radius:4px;background:currentColor;opacity:.3;transition:height .35s var(--ease),opacity .3s,background .3s,transform .3s}
+.side a:hover i{opacity:.7;transform:scale(1.25)}
+.side a.on i{height:20px;opacity:1;background:var(--cyan-500)}
+.side.on-cyan a.on i{background:#fff}
+.side a span{padding:2px 9px;border-radius:7px;background:rgba(255,255,255,.94);box-shadow:0 4px 12px -4px rgba(0,0,0,.3);color:var(--gray-900);font-weight:700;font-size:12px;line-height:17px;white-space:nowrap;opacity:0;transform:translateX(8px);transition:opacity .25s,transform .25s var(--ease);pointer-events:none}
+.side:hover a span,.side:focus-within a span{opacity:1;transform:none}
+.side a.on span{color:var(--cyan-text)}
+.side-arrow{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.75);border:1px solid var(--line);color:var(--gray-900);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);transition:background .25s,transform .25s var(--ease),opacity .25s}
+.side-arrow:hover{transform:scale(1.1);background:#fff}
+.side-arrow:disabled{opacity:.3;cursor:default;transform:none}
+.side-arrow svg{width:14px;height:14px}
+@media (max-width:860px){.side{right:4px}.side-arrow,.side a span{display:none}.side a{padding:0;min-height:13px}.side a i{width:5px;height:5px}.side a.on i{height:13px}}
+
+/* ── 01 hero ──────────────────────── */
+.hero{position:relative;overflow:hidden;min-height:calc(var(--u)*.4437);background:linear-gradient(180deg,#BFEFF6 0%,#D6F5FA 45%,#F3FCFE 100%)}
+.hero-canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:3;transition:opacity .6s}
+.hero-art{position:absolute;z-index:1;top:calc(var(--u)*-.1167);left:calc(50% - var(--u)*.3255);width:calc(var(--u)*.986);aspect-ratio:3840/2753;pointer-events:none;will-change:transform;opacity:0;animation:artIn 1.4s var(--ease) .2s forwards}
+.hero-art img{width:100%;height:100%}
+@keyframes artIn{from{opacity:0;translate:6% 4%}to{opacity:1;translate:0 0}}
+.hero-copy{position:relative;z-index:2;padding-top:calc(var(--u)*.0682);padding-bottom:calc(var(--u)*.0177)}
+.hero-logo{position:relative;width:calc(var(--u)*.2646);min-width:230px;aspect-ratio:508.144/158.584;cursor:pointer}
+.hero-logo img{width:100%;height:100%;transition:opacity .6s}
+.hero-logo.hide img{opacity:0;transition:none}
+.hero-logo.instant img{transition:none}
+.hero-logo::after{content:"";position:absolute;left:12.6%;top:59.5%;width:10%;aspect-ratio:1;translate:-50% -50%;border-radius:50%;border:2px solid var(--cyan-300);opacity:0;pointer-events:none}
+.hero-logo.locked::after{animation:lockRing 1s var(--ease)}
+.hero-logo.locked img{animation:lockPop .55s var(--ease)}
+@keyframes lockRing{0%{opacity:.9;scale:.4}100%{opacity:0;scale:5}}
+@keyframes lockPop{0%{scale:1.035}100%{scale:1}}
+.hero h1{font-size:clamp(22px,calc(var(--u)*.0177),34px);line-height:1.3;letter-spacing:-.01em;margin-top:calc(var(--u)*.008)}
+.hero-intro{text-wrap:pretty;max-width:calc(var(--u)*.3);min-width:min(100%,330px);margin-top:calc(var(--u)*.0105);font-size:clamp(16px,calc(var(--u)*.011),21px);line-height:1.6;letter-spacing:-.045em;color:var(--gray-600)}
+.hero-stats{display:flex;flex-wrap:wrap;gap:14px;margin-top:calc(var(--u)*.025)}
+.hero-stats li{min-width:156px;padding:16px 22px 15px;border-radius:18px;background:linear-gradient(135deg,rgba(255,255,255,.72),rgba(255,255,255,.36));border:1px solid rgba(255,255,255,.92);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);box-shadow:0 12px 30px rgba(0,51,61,.08);transition:transform .4s var(--ease),box-shadow .4s}
+.hero-stats li:hover{transform:translateY(-4px);box-shadow:0 18px 36px -12px rgba(0,51,61,.22)}
+.hero-stats b{display:block;font-size:clamp(28px,calc(var(--u)*.0188),36px);line-height:1.1;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.hero-stats b small{margin-left:3px;font-size:max(14px,.5em);letter-spacing:0;color:var(--gray-600)}
+.hero-stats li.risk b{color:#E03C3C}
+.hero-stats li>span{display:flex;align-items:center;gap:7px;margin-top:7px;font-weight:700;font-size:14px;line-height:20px;color:var(--gray-600)}
+.hero-stats li>span::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--cyan-500)}
+.hero-stats li.risk>span::before{background:var(--red)}
+.hero-credit{display:flex;flex-wrap:wrap;gap:14px;margin-top:calc(var(--u)*.022);font-weight:700;font-size:15px;line-height:23px;color:var(--gray-600)}
+.hero-credit p{padding:14px 22px;border-radius:18px;background:rgba(255,255,255,.45);border:1px solid rgba(255,255,255,.85);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);box-shadow:0 10px 30px rgba(0,51,61,.06)}
+.hero-in>*{opacity:0;transform:translateY(16px)}
+.hero-in.go>*{animation:heroIn .9s var(--ease) forwards;animation-delay:calc(var(--i)*.09s + .25s)}
+.hero-in>.hero-logo,.hero-in.go>.hero-logo{opacity:1;transform:none;animation:none}
+@keyframes heroIn{to{opacity:1;transform:none}}
+@media (max-width:900px){
+  .hero{min-height:0;display:flex;flex-direction:column}
+  .hero-copy{order:1;padding-top:calc(var(--nav-h) + 36px);padding-bottom:0}
+  .hero-logo{width:min(64vw,300px)}
+  .hero-intro{max-width:none}
+  .hero-stats{gap:10px;margin-top:24px}
+  .hero-stats li{flex:1 1 0;min-width:0;padding:14px 14px 13px}
+  .hero-stats li>span{font-size:13px;gap:6px}
+  .hero-credit{margin:24px 0 0}
+  .hero-art{order:2;position:relative;top:auto;left:auto;width:170%;margin:-2vw 0 -26vw -41.8%}
+}
+
+/* ── 02 overview ──────────────────── */
+.overview{position:relative;z-index:4;background:linear-gradient(100deg,var(--cyan-500),var(--cyan-300));color:#fff;padding:clamp(44px,calc(var(--u)*.0375),72px) 0}
+.overview .wrap{display:grid;grid-template-columns:200fr 472fr 820fr;align-items:start}
+.overview .eyebrow{color:#fff;padding-top:8px}
+.overview h2{font-size:clamp(24px,calc(var(--u)*.0156),30px);line-height:1.34}
+.overview p{font-size:18px;line-height:28px;letter-spacing:-.05em}
+@media (max-width:1100px){.overview .wrap{grid-template-columns:1fr;row-gap:16px}.overview .eyebrow{padding:0}}
+
+/* ── background ───────────────────── */
+.bg1{padding:44px 0 clamp(56px,calc(var(--u)*.028),64px)}
+.bg1 .eyebrow{color:var(--gray-600)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-top:26px}
+.stat{display:flex;flex-direction:column;gap:8px;padding:22px 26px;border-radius:14px;background:#fff;border:1.5px solid var(--line);transition:transform .4s var(--ease),box-shadow .4s}
+.stat:hover{transform:translateY(-6px);box-shadow:0 18px 30px -18px rgba(0,51,61,.35)}
+.stat.hot{background:var(--grad);border-color:transparent}
+.stat b{font-size:clamp(30px,calc(var(--u)*.0198),38px);line-height:46px;letter-spacing:-.02em;white-space:nowrap;font-variant-numeric:tabular-nums}
+.stat p{font-weight:700;font-size:16px;line-height:24px}
+.stat small{font-size:13px;line-height:19px;color:var(--gray-600)}
+.stat.hot small{color:var(--gray-900)}
+.insight{display:flex;align-items:baseline;gap:22px;margin-top:27px;padding:18px 32px;border-radius:10px;background:#EEF9FB;overflow:hidden;position:relative}
+.insight span{flex:none;font-weight:700;font-size:15px;letter-spacing:.08em;color:var(--cyan-text)}
+.insight p{font-weight:700;font-size:clamp(17px,calc(var(--u)*.011),21px);line-height:1.4;letter-spacing:-.02em}
+.insight::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,rgba(1,190,215,.16) 50%,transparent 70%);transform:translateX(-100%)}
+.insight.in::after{animation:sheen 1.6s .5s var(--ease) forwards}
+@keyframes sheen{to{transform:translateX(100%)}}
+@media (max-width:1100px){.stats{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:560px){.stats{grid-template-columns:1fr}.insight{flex-direction:column;gap:6px;padding:18px 22px}}
+
+/* ── 03 solution ──────────────────── */
+.solution{padding:clamp(72px,calc(var(--u)*.0625),120px) 0}
+.solution h2{margin-top:20px;font-size:clamp(25px,calc(var(--u)*.0188),36px);line-height:1.4;letter-spacing:-.02em;text-wrap:balance}
+.values{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;align-items:center;margin-top:56px}
+.value{align-self:stretch;padding:36px 32px 34px;border-radius:24px;background:#fff;border:1px solid #EEE;transition:transform .45s var(--ease),box-shadow .45s,border-color .3s}
+.value:hover{transform:translateY(-8px);border-color:var(--cyan-100);box-shadow:0 26px 44px -26px rgba(0,51,61,.4)}
+.value i{display:grid;place-items:center;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--cyan-500),var(--cyan-300));color:#fff;font-style:normal;font-weight:700;font-size:16px}
+.value small{display:block;margin-top:22px;font-weight:700;font-size:12px;letter-spacing:.08em;color:var(--cyan-text)}
+.value h3{margin-top:12px;font-size:26px;line-height:34px}
+.value p{margin-top:16px;font-size:16px;line-height:26px;color:var(--ink-2)}
+.value em{display:block;margin-top:26px;padding-top:20px;border-top:1px solid #EEE;font-style:normal;font-weight:700;font-size:13px;line-height:20px;color:var(--gray-500)}
+.arrow{width:59px;text-align:center;font-weight:700;font-size:28px;color:var(--gray-500)}
+.points{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:56px}
+.point{padding:28px 32px;border-radius:20px;background:var(--cyan-50)}
+.point h3{font-size:20px;line-height:28px}
+.point p{margin-top:10px;font-size:15px;line-height:24px;color:var(--ink-2)}
+@media (max-width:1000px){.values{grid-template-columns:1fr;gap:8px}.arrow{width:auto;rotate:90deg;justify-self:center}.points{grid-template-columns:1fr}}
+
+/* ── 04 persona ───────────────────── */
+.persona{padding:clamp(40px,3vw,56px) 0 60px}
+.people{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:26px}
+.person{display:flex;flex-direction:column;align-items:flex-start;gap:12px;width:100%;padding:22px 24px;border-radius:14px;background:var(--gray-50);text-align:left;transition:transform .4s var(--ease),box-shadow .4s,background .3s}
+.person:hover{transform:translateY(-6px);background:#fff;box-shadow:0 0 0 1.5px var(--cyan-100),0 22px 34px -20px rgba(0,51,61,.35)}
+.bubble{align-self:stretch;display:flex;align-items:center;min-height:63px;padding:8px 14px;border-radius:9px;background:#fff;border:1.5px solid var(--cyan-100);font-weight:700;font-size:15px;line-height:22px}
+.who{display:flex;align-items:center;gap:16px}
+.avatar{position:relative;flex:none;width:96px;height:96px}
+.avatar img{position:absolute;top:-12.5%;left:-20.83%;width:141.66%;height:141.67%}
+.who b{display:block;font-size:22px;line-height:28px}
+.who span{display:block;margin-top:4px;font-size:14px;line-height:19px;color:var(--gray-600)}
+.who em{display:inline-block;margin-top:4px;padding:4px 10px;border-radius:6px;background:var(--cyan-50);font-style:normal;font-weight:700;font-size:13px;line-height:16px;color:var(--cyan-text)}
+.person .desc{display:block;font-size:15px;line-height:23px;letter-spacing:-.04em;color:var(--gray-600)}
+.person .go{display:inline-flex;align-items:center;gap:6px;font-weight:700;font-size:13px;color:var(--cyan-text);opacity:0;transform:translateX(-6px);transition:opacity .3s,transform .3s}
+.person:hover .go,.person:focus-visible .go{opacity:1;transform:none}
+@media (max-width:1000px){.people{grid-template-columns:1fr}.person .go{opacity:1;transform:none}}
+
+/* ── 04a journey ──────────────────── */
+.journey{padding:64px 0 72px}
+.journey .eyebrow{font-size:13px}
+.journey .title{font-size:clamp(24px,calc(var(--u)*.0208),40px)}
+.jm-scroll{margin-top:44px;overflow-x:auto;padding-bottom:6px}
+.jm{display:grid;grid-template-columns:167px repeat(6,1fr);column-gap:14px;row-gap:9px;min-width:1080px;position:relative}
+.jm>*{position:relative;z-index:1}
+.jm .band{grid-column:1/-1;border-radius:11px;background:#F3F3F3;z-index:0}
+.jm .lab{align-self:center;padding-left:18px;font-weight:700;font-size:17px;color:var(--ink-2)}
+.jm .stage{display:grid;place-items:center;height:37px;border-radius:19px;background:var(--grad);color:#fff;font-weight:700;font-size:17px;margin-bottom:2px}
+.jm .cell{padding:10px 5px;font-size:15px;line-height:22px}
+.jm .think{margin:5px 2px;padding:10px 10px;border-radius:12px;background:var(--cyan-50);font-weight:700;font-size:14px;line-height:21px}
+.jm .fix{font-size:14px;line-height:21px;padding-top:14px}
+.jm .chart{grid-column:2/-1;position:relative;height:133px}
+.jm .chart svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.jm .chart svg{clip-path:inset(-10px 100% -10px 0);transition:clip-path 2.2s var(--ease) .2s}
+.jm .chart path{fill:none;stroke:#009FB5;stroke-width:2.5;vector-effect:non-scaling-stroke}
+.in .chart svg{clip-path:inset(-10px 0 -10px 0)}
+.jm .chart i{position:absolute;width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:50%;border:2.5px solid #fff;background:var(--c);box-shadow:0 2px 6px rgba(0,0,0,.18);scale:0;transition:scale .5s var(--ease);transition-delay:calc(var(--n)*.36s + .3s)}
+.in .chart i{scale:1}
+.jm .axis{position:absolute;left:-64px;font-size:12px;color:var(--gray-500)}
+.jm-note{margin-top:28px;font-size:16px;color:var(--ink-2)}
+
+/* ── fit: 고정 좌표 무대 ───────────── */
+.fit{position:relative}
+.fit-inner{transform-origin:0 0}
+.abs{position:absolute}
+
+/* ── 05 flowchart ─────────────────── */
+.flow{background:linear-gradient(180deg,#EEF9FB,#D3F1F6);padding:80px 0 clamp(56px,4vw,80px)}
+.flow .title{font-size:clamp(25px,calc(var(--u)*.0177),34px)}
+.flow-sub{margin-top:10px;font-size:16px;color:var(--gray-600)}
+.legend{display:flex;flex-wrap:wrap;justify-content:center;gap:12px 46px;margin-top:28px;font-size:13px;color:var(--gray-600)}
+.legend li{display:flex;align-items:center;gap:12px}
+.legend i{width:44px;height:26px;border-radius:9px;background:#fff;border:1.3px solid var(--line-2)}
+.legend .l-start{border:0;border-radius:999px;background:var(--grad)}
+.legend .l-ghost{border:1.2px dashed var(--gray-400)}
+.legend .l-end{border:0;background:var(--line)}
+.legend .l-dia{width:20px;height:20px;margin:0 4px;border-radius:2px;border:1.5px solid var(--cyan-500);rotate:45deg}
+.flow-map{margin:30px auto 0;--fit-w:1248;max-width:1248px}
+.flow-map .fit-inner{width:1248px;display:grid;gap:18px}
+.lane{position:relative;padding:24px;border-radius:16px;background:#fff;transition:box-shadow .4s}
+.lane:hover{box-shadow:0 18px 40px -24px rgba(0,51,61,.35)}
+.lane-in{position:relative;width:1200px}
+.lane-label{position:absolute;left:0;top:0;padding-left:14px}
+.lane-label::before{content:"";position:absolute;left:0;top:0;width:3px;height:40px;background:linear-gradient(180deg,var(--cyan-500),var(--cyan-300))}
+.lane-label b{display:block;font-size:20px;line-height:26px}
+.lane-label span{display:block;width:140px;font-weight:700;font-size:12px;line-height:17px;color:var(--cyan-text)}
+.lane svg{position:absolute;inset:0;overflow:visible;pointer-events:none}
+.lane .base{stroke:#B8C0C3;stroke-width:1.3;fill:none}
+.lane .dotend{fill:#B8C0C3}
+.lane .lit{stroke:var(--cyan-500);stroke-width:2.4;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.lane .runner{fill:var(--cyan-500);filter:drop-shadow(0 0 6px rgba(1,190,215,.9));opacity:0}
+.lane.playing .runner{opacity:1}
+.node{position:absolute;width:125.1px;height:40px;display:grid;place-items:center;border-radius:9px;background:#fff;border:1.3px solid var(--line-2);font-weight:700;font-size:12px;line-height:15px;text-align:center;transition:border-color .3s,box-shadow .3s,background .3s,color .3s,opacity .4s,transform .3s var(--ease)}
+.node:hover{transform:translateY(-2px)}
+.node.start{border:0;border-radius:999px;background:var(--grad);color:var(--gray-900);font-size:13px}
+.node.ghost{border:1.2px dashed var(--gray-400);font-weight:400;color:var(--gray-600)}
+.node.end{border-color:transparent;background:var(--line)}
+.node.diamond{width:46px;height:46px;border:0;background:none;font-size:9.5px;line-height:12px}
+.node.diamond::before{content:"";position:absolute;inset:6.7px;background:#fff;border:1.5px solid var(--cyan-500);rotate:45deg}
+.node.diamond span{position:relative}
+.lane.played .node:not(.on){opacity:.4}
+.node.on{border-color:var(--cyan-500);border-style:solid;color:var(--gray-900);box-shadow:0 0 0 4px rgba(1,190,215,.16)}
+.node.start.on{box-shadow:0 0 0 4px rgba(1,190,215,.22),0 8px 18px -8px rgba(1,190,215,.8)}
+.node.end.on{background:var(--cyan-700);color:#fff;border-color:var(--cyan-700)}
+.node.diamond.on{box-shadow:none;filter:drop-shadow(0 0 6px rgba(1,190,215,.7))}
+.flow-hint{margin-top:22px;text-align:center;font-size:14px;color:var(--gray-600)}
+.flow-list{display:none;margin-top:28px;gap:16px}
+.flow-card{padding:20px;border-radius:16px;background:#fff}
+.flow-card header{position:relative;padding-left:14px;margin-bottom:16px}
+.flow-card header::before{content:"";position:absolute;left:0;top:2px;width:3px;height:40px;background:linear-gradient(180deg,var(--cyan-500),var(--cyan-300))}
+.flow-card header b{display:block;font-size:18px;line-height:23px}
+.flow-card header span{font-weight:700;font-size:13px;color:var(--cyan-text)}
+.steps{position:relative;display:grid;gap:10px;padding-left:22px}
+.steps::before{content:"";position:absolute;left:5px;top:16px;bottom:16px;width:1.5px;background:#B8C0C3}
+.steps li{position:relative;padding:11px 14px;border-radius:10px;border:1.5px solid var(--line-2);font-weight:700;font-size:15px;line-height:20px;opacity:0;transform:translateX(-10px);transition:opacity .5s var(--ease),transform .5s var(--ease);transition-delay:calc(var(--n)*.12s)}
+.flow-card.in .steps li{opacity:1;transform:none}
+.steps li::before{content:"";position:absolute;left:-20px;top:50%;width:7px;height:7px;margin-top:-3.5px;border-radius:50%;background:var(--cyan-500);box-shadow:0 0 0 3px #fff}
+.steps li.start{border:0;border-radius:999px;background:var(--grad)}
+.steps li.ghost{border:1.2px dashed var(--gray-400);font-weight:400;color:var(--gray-600)}
+.steps li.end{border-color:transparent;background:var(--line)}
+.steps li.diamond{border-color:var(--cyan-500);font-size:14px}
+.alt{margin-top:14px;padding-top:14px;border-top:1px dashed var(--line-2);display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:14px}
+.alt span{font-weight:700;color:var(--gray-500)}
+.alt i{font-style:normal;padding:6px 12px;border-radius:8px;border:1.2px dashed var(--gray-400);color:var(--gray-600)}
+@media (max-width:1100px){.flow-map,.flow-hint{display:none}.flow-list{display:grid}}
+
+/* ── 06 brand ─────────────────────── */
+.brand{padding:50px 0 80px}
+.brand-grid{display:grid;grid-template-columns:702fr 700fr;column-gap:90px;row-gap:62px;margin-top:40px}
+.sub{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 16px;margin-bottom:18px}
+.sub h3{font-size:20px;line-height:26px;letter-spacing:.08em}
+.sub p{font-size:15px;line-height:20px;letter-spacing:-.03em;color:var(--gray-600)}
+.icon-row{display:flex;align-items:flex-start;gap:28px 40px}
+.icon-row figcaption{margin-top:12px;text-align:center;font-weight:700;font-size:12px;line-height:16px;letter-spacing:.02em;color:var(--gray-500)}
+.grid-box{position:relative;width:150px;height:150px;overflow:hidden;border-radius:34.286px;background:#fff;border:1.071px solid var(--line)}
+.grid-box img{position:absolute;left:27.65px;top:18.55px;width:327.773px;height:100.07px;clip-path:inset(0 100% 0 0);transition:clip-path 1.6s var(--ease) .2s}
+.in .grid-box img{clip-path:inset(0 0 0 0)}
+.app-box{position:relative;width:150px;height:150px;transition:transform .5s var(--ease)}
+.app-box:hover{transform:translateY(-6px) rotate(-4deg)}
+.app-box img{position:absolute;left:-22px;top:-8px;width:194px;height:194px}
+.word{flex:1 1 180px;min-width:0}
+.word img{width:100%;max-width:321.82px;height:auto;margin-top:17.6px}
+.word figcaption{margin-top:28px;text-align:left;font-size:15px;line-height:20px;letter-spacing:0;color:var(--cyan-text)}
+.swatches{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+.sw{position:relative;display:block;width:100%;height:94px;overflow:hidden;border-radius:10px;background:#fff;border:1px solid var(--line);text-align:left;transition:transform .35s var(--ease),box-shadow .35s}
+.sw:hover{transform:translateY(-4px);box-shadow:0 14px 22px -14px rgba(0,51,61,.4)}
+.sw i{position:absolute;inset:0 0 auto 0;height:50px;background:var(--c);transition:height .35s var(--ease)}
+.sw:hover i{height:56px}
+.sw b{position:absolute;left:10px;top:56px;font-size:13px;line-height:16px;white-space:nowrap}
+.sw span{position:absolute;left:10px;top:72px;font-size:12px;line-height:16px;color:var(--gray-500);font-variant-numeric:tabular-nums}
+.sw.copied span{color:var(--cyan-text);font-weight:700}
+.type-top{display:flex;align-items:flex-end;gap:26px;flex-wrap:wrap}
+.type-top b{font-size:112px;line-height:.9;letter-spacing:-.04em}
+.type-top span{font-size:clamp(26px,calc(var(--u)*.0188),36px);line-height:44px;padding-bottom:8px}
+.weights{margin-top:26px;display:grid;gap:12px}
+.weights li{display:grid;grid-template-columns:120px 1fr;font-size:18px;line-height:24px}
+.weights li span{color:var(--gray-600);font-weight:400;font-size:16px}
+.icons{display:grid;grid-template-columns:repeat(5,1fr);row-gap:34px;padding-top:28px}
+.icons li{display:grid;justify-items:center;gap:24px;font-size:14px;line-height:20px;font-weight:700;color:var(--gray-600);transition:transform .35s var(--ease)}
+.icons li:hover{transform:translateY(-5px)}
+.icons img{width:36px;height:36px}
+@media (max-width:1100px){.brand-grid{grid-template-columns:1fr}}
+@media (max-width:560px){.icon-row{flex-wrap:wrap;gap:24px 20px}.word{flex-basis:100%}.swatches{grid-template-columns:repeat(2,1fr)}.weights li{grid-template-columns:1fr;gap:2px}.type-top b{font-size:88px}}
+
+/* ── phones ───────────────────────── */
+.phone{position:relative;width:var(--pw);aspect-ratio:311.499/651.114;border-radius:calc(var(--pw)*.1473);border:1.48px solid #C9CED1;background:linear-gradient(115.57deg,#5A5F63 14.286%,#1E2123 32.143%,#15171A 57.143%,#474C50 85.714%);filter:drop-shadow(0 30px 30px rgba(0,0,0,.3))}
+.phone::before{content:"";position:absolute;inset:calc(var(--pw)*.019);border-radius:calc(var(--pw)*.1235);background:#060708}
+.phone-screen{position:absolute;inset:calc(var(--pw)*.0285);border-radius:calc(var(--pw)*.114);overflow:hidden;background:#fff}
+.phone-screen img{position:absolute;left:0;top:0;width:100%;height:auto}
+.phone::after{content:"";position:absolute;left:34.44%;top:2.614%;width:29.93%;height:4.205%;border-radius:999px;background:#0A0A0B}
+/* 보드 2·3의 기기: 검은 베젤(393 기준 11px) */
+.dev{position:relative;width:var(--w,393px);aspect-ratio:393/852;border-radius:calc(var(--w,393px)*.1272);background:#fff;box-shadow:0 0 0 calc(var(--w,393px)*.028) #0B0B0C,0 40px 80px rgba(0,0,0,.28)}
+.dev img,.scr img{display:block;width:100%;height:100%;border-radius:inherit;object-fit:cover;object-position:top}
+.dev .isl{position:absolute;left:34.1%;top:1.29%;width:32.06%;height:4.34%;border-radius:999px;background:#0B0B0C}
+.scr{position:relative;width:var(--w,338px);border-radius:calc(var(--w,338px)*.0865);background:#fff;box-shadow:0 18px 44px rgba(0,0,0,.12),0 0 0 1px rgba(0,0,0,.06);overflow:hidden}
+.fig .dev,.fig .scr{transition:transform .6s var(--ease)}
+.fig:hover .dev,.fig:hover .scr{transform:translateY(-10px)}
+.cap{display:flex;align-items:flex-start;gap:10px;font-weight:700;font-size:14px;line-height:22px;white-space:nowrap}
+.cap b,.num{flex:none;display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--gray-900);color:#fff;font-size:13px;margin-top:-3px}
+
+/* ── 07 function 1 : pinned sequence ─ */
+.seq{position:relative;height:540vh;scroll-margin-top:0}
+.seq-sticky{position:sticky;top:0;height:100vh;height:100svh;min-height:520px;display:flex;flex-direction:column;overflow:hidden;background:linear-gradient(180deg,#fff,#F3FCFE)}
+.seq-sticky::before{content:"";position:absolute;left:50%;top:56%;width:min(92vw,980px);aspect-ratio:1;translate:-50% -50%;border-radius:50%;background:radial-gradient(closest-side,rgba(81,229,245,.42),transparent);pointer-events:none}
+.seq .head{padding-top:calc(var(--nav-h) + clamp(10px,3vh,34px));flex:none;position:relative}
+.seq-body{flex:1;min-height:0;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:clamp(24px,5vw,90px);position:relative}
+.seq-copy{position:relative;height:200px;justify-self:end;width:min(100%,360px)}
+.seq-item{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:flex-end;text-align:right;opacity:0;transform:translateY(24px);transition:opacity .45s var(--ease),transform .45s var(--ease);pointer-events:none}
+.seq-item.on{opacity:1;transform:none}
+.seq-item.past{transform:translateY(-24px)}
+.seq-item small{padding:5px 12px;margin-bottom:10px;border-radius:999px;background:rgba(255,255,255,.6);border:1px solid #fff;box-shadow:0 6px 16px rgba(0,51,61,.08);font-weight:700;font-size:14px;letter-spacing:.14em;color:var(--cyan-text);font-variant-numeric:tabular-nums}
+.seq-item b{font-size:clamp(40px,5vw,72px);line-height:1.15;letter-spacing:-.02em}
+.seq-item p{font-size:clamp(18px,1.6vw,24px);color:var(--gray-600);letter-spacing:-.03em}
+.seq-stage{perspective:1400px;--pw:min(300px,calc((100svh - var(--nav-h) - 240px)*.478))}
+.seq-stage .phone{transform-style:preserve-3d;will-change:transform}
+.seq-stage .phone-screen img{opacity:0;transition:opacity .4s;will-change:transform}
+.seq-stage .phone-screen img.on{opacity:1}
+.seq-tabs{display:grid;gap:6px;justify-self:start;padding:10px;border-radius:32px;background:linear-gradient(160deg,rgba(255,255,255,.8),rgba(255,255,255,.4));border:1px solid rgba(255,255,255,.95);box-shadow:0 20px 44px -22px rgba(0,51,61,.4);backdrop-filter:blur(20px) saturate(1.5);-webkit-backdrop-filter:blur(20px) saturate(1.5)}
+.seq-tabs button{display:flex;align-items:center;gap:14px;padding:6px 18px 6px 6px;border-radius:999px;font-weight:700;font-size:16px;color:var(--gray-600);transition:color .3s,background .3s}
+.seq-tabs button i{display:grid;place-items:center;width:42px;height:42px;border-radius:50%;background:rgba(26,28,28,.06);transition:background .3s,transform .4s var(--ease)}
+.seq-tabs button img{width:24px;height:24px;filter:brightness(0);opacity:.5;transition:filter .3s,opacity .3s}
+.seq-tabs button:hover{color:var(--gray-900)}
+.seq-tabs button.on{color:var(--gray-900);background:#fff}
+.seq-tabs button.on i{background:var(--grad);transform:scale(1.06)}
+.seq-tabs button.on img{filter:brightness(0);opacity:1}
+.seq-bar{position:absolute;left:0;right:0;bottom:0;height:3px;background:rgba(26,28,28,.06)}
+.seq-bar i{display:block;height:100%;background:var(--grad);transform-origin:left;transform:scaleX(0)}
+@media (max-width:900px){
+  .seq .title{font-size:22px}
+  .seq-body{grid-template-columns:1fr;grid-template-rows:auto auto auto;align-content:center;justify-items:center;gap:14px;padding-bottom:16px}
+  .seq-stage{order:1;--pw:min(230px,calc((100svh - var(--nav-h) - 330px)*.478))}
+  .seq-copy{order:2;justify-self:center;height:92px;width:100%}
+  .seq-item{align-items:center;text-align:center}
+  .seq-item small{display:none}
+  .seq-item b{font-size:30px}
+  .seq-item p{font-size:17px}
+  .seq-tabs{order:3;grid-auto-flow:column;justify-self:center;gap:8px;padding:8px;border-radius:999px}
+  .seq-tabs button{padding:0;gap:0}
+  .seq-tabs button span{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+}
+
+/* ── 08 function 2 : smart clean ──── */
+.f2{padding:clamp(44px,3vw,56px) 0 0;overflow:hidden}
+.f2-stage{margin-top:52px}
+.f2-stage>.fit-inner{position:relative;width:1492px;height:740px}
+.zoom{position:absolute;pointer-events:none}
+.zoom img{width:100%;height:100%}
+.zoom.flip{transform:scaleX(-1)}
+.piece{border-radius:18px;box-shadow:0 24px 50px -14px rgba(0,51,61,.3)}
+.f2-text h3{font-size:20px;line-height:28px}
+.f2-text p{margin-top:8px;font-size:16px;line-height:25px;letter-spacing:-.05em;color:var(--ink-2)}
+.f2-phones{left:330px;top:15px;width:740px;height:745px}
+.f2-phones .ph{position:absolute;display:grid;place-items:center}
+.f2-phones .phone{--pw:311.499px}
+.ph-clean{left:340px;top:.65px;width:399.085px;height:688.13px}
+.ph-clean .phone{rotate:-8deg}
+.ph-record{left:0;top:100px;width:377.853px;height:680.108px}
+.ph-record .phone{rotate:6deg}
+.done{position:absolute;inset:0;z-index:2;display:grid;place-content:center;justify-items:center;gap:14px;background:rgba(255,255,255,.94);color:var(--gray-900);font-weight:700;font-size:20px;opacity:0;transition:opacity .5s;pointer-events:none}
+.done i{display:grid;place-items:center;width:84px;height:84px;border-radius:50%;background:var(--grad);transform:scale(.4);transition:transform .6s var(--ease)}
+.done svg{width:40px;height:40px}
+.done small{font-weight:400;font-size:14px;color:var(--gray-600)}
+.cleaned .done{opacity:1}
+.cleaned .done i{transform:none}
+.clean-zone{position:relative;max-width:100%}
+.clean-card{position:relative;z-index:1;width:388.3px;max-width:100%;padding:28px 13px 27px;border-radius:20px;background:#fff;text-align:center;box-shadow:0 24px 50px -14px rgba(0,51,61,.3),0 0 0 1px rgba(0,51,61,.04)}
+.clean-card h4{font-size:15px;line-height:20px;color:#3A3F41}
+.score{font-weight:700;font-size:40px;line-height:48px;margin-top:10px;font-variant-numeric:tabular-nums}
+.gain{display:inline-block;margin-top:22px;padding:5px 12px;border-radius:999px;background:var(--cyan-50);font-weight:700;font-size:13.5px;line-height:18px;color:var(--cyan-text);transition:background .4s,color .4s}
+.cleaned .gain{background:var(--cyan-700);color:#fff}
+.meter{position:relative;height:13px;margin:26px 5px 0;border-radius:999px;background:#F1F2F2;overflow:hidden}
+.meter u{position:absolute;inset:0 8% 0 82%;border-radius:0 999px 999px 0;border:1.5px dashed var(--cyan-300);border-left:0;background:var(--cyan-50)}
+.meter i{position:absolute;left:0;top:0;bottom:0;width:82%;border-radius:999px;background:var(--grad);transition:width 1.4s var(--ease)}
+.cleaned .meter i{width:92%}
+.clean-btn{display:block;width:100%;height:62px;margin-top:26px;border-radius:22px;background:linear-gradient(160deg,var(--cyan-500),var(--cyan-300));color:var(--gray-900);font-weight:700;font-size:19px;transition:transform .25s var(--ease),box-shadow .25s,filter .25s}
+.clean-btn:hover{transform:translateY(-2px);box-shadow:0 14px 26px -12px rgba(1,190,215,.9)}
+.clean-btn:active{transform:scale(.98)}
+.clean-btn:disabled{filter:saturate(.6);cursor:progress}
+.clean-btn.again{background:none;border:1.5px solid var(--line-2);color:var(--gray-600)}
+.idle .clean-btn{animation:nudge 2.4s ease-in-out infinite}
+@keyframes nudge{0%,100%{box-shadow:0 0 0 0 rgba(1,190,215,.5)}50%{box-shadow:0 0 0 12px rgba(1,190,215,0)}}
+.chip{position:absolute;left:50%;top:50%;z-index:2;padding:7px 12px;border-radius:999px;background:#fff;color:var(--gray-900);font-weight:700;font-size:13px;white-space:nowrap;box-shadow:0 10px 24px -8px rgba(0,0,0,.35);pointer-events:none}
+.chip.risk{background:var(--red)}
+.chip.dot{padding:0;width:10px;height:10px;background:var(--cyan-500)}
+.after{color:var(--gray-500);font-weight:700;font-size:14px;line-height:20px;white-space:nowrap;transition:color .5s}
+.cleaned .after{color:var(--cyan-text)}
+.report{opacity:0;transform:translateY(24px) scale(.94);transition:opacity .7s var(--ease) .9s,transform .7s var(--ease) .9s}
+.cleaned .report{opacity:1;transform:none}
+.f2-usage .piece{transition:transform .5s var(--ease)}
+.f2-usage:hover .piece{transform:translateY(-6px)}
+@media (max-width:1100px){
+  .f2-stage{margin-top:36px}
+  .f2-stage>.fit-inner{width:auto;height:auto;display:grid;grid-template-columns:minmax(0,1fr);gap:40px;justify-items:center}
+  .f2-stage .abs{position:static}
+  .f2-stage .f2-text{width:auto!important}
+  .f2-stage .zoom,.f2-stage .after{display:none}
+  .f2-clean{order:1;display:grid;grid-template-columns:minmax(0,1fr);justify-items:center;gap:22px;width:min(100%,420px)}
+  .f2-clean .clean-zone,.f2-clean .clean-card{width:100%}
+  .f2-clean .f2-text,.f2-usage .f2-text{text-align:center}
+  .f2-usage{order:2;display:grid;grid-template-columns:minmax(0,1fr);justify-items:center;gap:20px;width:min(100%,420px)}
+  .f2-usage .piece{width:min(100%,355px)!important;height:auto!important}
+  .f2-usage .f2-text br{display:none}
+  .report{display:none;width:224px!important;height:auto!important}
+  .cleaned .report{display:block;animation:reportIn .7s var(--ease) .5s both}
+  @keyframes reportIn{from{opacity:0;transform:translateY(20px) scale(.94)}to{opacity:1;transform:none}}
+  .f2-phones{order:3;width:100%;min-width:0;height:auto;--fit-w:740}
+  .f2-phones>.fit-inner{position:relative;width:740px;height:700px}
+}
+@media (min-width:1101px){
+  .f2-stage{--fit-w:1492}
+  .f2-phones{--fit-w:0}
+  .f2-phones>.fit-inner{position:absolute;inset:0}
+}
+
+/* ── 09 key features ──────────────── */
+.glow{position:relative;background:
+  radial-gradient(900px 760px at 86% 9%,rgba(127,233,246,.3),transparent 70%),
+  radial-gradient(860px 820px at 6% 36%,rgba(127,233,246,.28),transparent 70%),
+  radial-gradient(820px 680px at 80% 46%,rgba(127,233,246,.24),transparent 70%),
+  radial-gradient(960px 680px at 10% 67%,rgba(127,233,246,.26),transparent 70%),
+  radial-gradient(900px 760px at 88% 84%,rgba(127,233,246,.3),transparent 70%),
+  radial-gradient(760px 520px at 30% 97%,rgba(127,233,246,.22),transparent 70%),
+  linear-gradient(180deg,#fff 0%,#EAF9FC 6%,#E3F7FB 94%,#F2FCFE 100%)}
+.kf-head{padding:96px 0 0;text-align:center}
+.kf-head h2,.feat-c h3{margin-top:20px;font-size:clamp(26px,calc(var(--u)*.0208),40px);line-height:1.35;letter-spacing:-.02em;text-wrap:balance}
+.feat{padding:clamp(64px,calc(var(--u)*.057),110px) 0}
+.feat h3{margin-top:16px;font-size:clamp(25px,calc(var(--u)*.0177),34px);line-height:1.36;letter-spacing:-.02em}
+.feat .lead{margin-top:16px;max-width:720px;font-size:16px;line-height:27px;color:var(--ink-2)}
+.feat-c{text-align:center}
+.feat-c .lead{margin-inline:auto}
+.stage{margin-top:48px;--fit-w:1240}
+.stage>.fit-inner{position:relative;width:1240px}
+.fig{margin:0}
+.fig .cap{position:absolute;left:0}
+.callout{width:330px;padding:16px 20px;border-radius:14px}
+.callout h4{font-size:16px;line-height:24px}
+.callout p{margin-top:4px;font-size:14px;line-height:22px;color:var(--ink-2)}
+.ln{height:0;border-top:1.5px dashed var(--cyan-500);transform-origin:right;scale:0 1;transition:scale .7s var(--ease);transition-delay:var(--d,0s)}
+.ln::before{content:"";position:absolute;left:-6px;top:-7px;width:12px;height:12px;border-radius:50%;background:var(--cyan-500);border:2.5px solid #fff;box-shadow:0 0 0 1px rgba(1,190,215,.4)}
+.in .ln{scale:1 1}
+.row{display:grid;align-items:start;gap:40px}
+.row-map{grid-template-columns:minmax(0,600fr) minmax(0,640fr);gap:0}
+.msteps li{flex-wrap:wrap;row-gap:2px}
+.msteps li span{flex:1 1 230px}
+.row-clean{grid-template-columns:minmax(0,520fr) minmax(0,680fr)}
+.row .stage{margin-top:0}
+.row-map .stage{--fit-w:640}
+.row-map .stage>.fit-inner{width:640px;height:1290px}
+.row-clean .stage{--fit-w:680}
+.row-clean .stage>.fit-inner{width:680px;height:1000px}
+.pin{display:flex;align-items:center;gap:10px;padding:12px 20px;border-radius:999px;background:linear-gradient(135deg,rgba(255,255,255,.72),rgba(255,237,237,.6));border:1px solid rgba(255,255,255,.95);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 10px 26px rgba(0,0,0,.1);font-weight:700;font-size:14px;line-height:20px;white-space:nowrap}
+.pin i{position:relative;width:10px;height:10px;border-radius:50%;background:var(--red)}
+.pin i::after{content:"";position:absolute;inset:0;border-radius:50%;border:2px solid var(--red);animation:ping 1.8s ease-out infinite}
+@keyframes ping{from{scale:1;opacity:.8}to{scale:3.4;opacity:0}}
+.msteps{display:grid;gap:12px;margin-top:24px}
+.msteps li{display:flex;align-items:center;gap:14px;min-height:54px;padding:10px 16px;border-radius:14px;background:linear-gradient(135deg,rgba(255,255,255,.72),rgba(229,249,252,.5));border:1px solid rgba(255,255,255,.95);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);box-shadow:0 10px 28px rgba(0,51,61,.08);font-size:14px;color:var(--ink-2);transition:transform .35s var(--ease)}
+.msteps li:hover{transform:translateX(8px)}
+.msteps i{flex:none;display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--cyan-500),var(--cyan-300));color:var(--gray-900);font-style:normal;font-weight:700;font-size:13px}
+.msteps b{flex:none;font-size:15px;color:var(--gray-900)}
+.pill{position:absolute;left:50%;top:-46px;translate:-50% 0;padding:6px 12px;border-radius:999px;background:var(--gray-900);color:#fff;font-weight:700;font-size:12px;line-height:18px;white-space:nowrap}
+.step-cap{position:absolute;left:50%;translate:-50% 0;text-align:center;white-space:nowrap}
+.step-cap b{display:block;font-size:18px;line-height:26px}
+.step-cap span{display:block;margin-top:16px;font-size:14px;line-height:22px;color:var(--ink-2)}
+.step-arrow{font-weight:700;font-size:24px;line-height:30px;color:var(--gray-500)}
+.scoreline{display:flex;flex-wrap:wrap;align-items:center;gap:8px 20px;margin-top:28px;font-weight:700}
+.scoreline small{white-space:nowrap}
+.scoreline b{font-size:clamp(56px,calc(var(--u)*.044),96px);line-height:1.05;letter-spacing:-.03em;color:var(--gray-600);font-variant-numeric:tabular-nums}
+.scoreline b.to{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.scoreline span{font-size:clamp(32px,calc(var(--u)*.025),48px);color:var(--gray-500)}
+.scoreline small{font-weight:400;font-size:14px;line-height:21px;color:var(--ink-2)}
+.scoreline small em{display:block;font-style:normal;font-weight:700;color:var(--gray-900)}
+@media (max-width:900px){
+  .trio{--fit-w:0;margin-inline:-20px}
+  .trio>.fit-inner{width:auto;height:auto!important;display:flex;gap:28px;overflow-x:auto;scroll-snap-type:x mandatory;padding:60px 32px 48px}
+  .trio .abs{position:relative;left:auto!important;top:auto!important}
+  .trio .fig{flex:none;scroll-snap-align:center;--w:236px}
+  .trio .fig .cap{position:static;margin-top:22px;white-space:normal;max-width:236px}
+  .trio .step-cap{position:static;translate:none;margin-top:20px;white-space:normal}
+  .trio .step-cap span{margin-top:6px}
+  .trio .step-arrow,.trio .ln{display:none}
+  .home-stage>.fit-inner{flex-direction:column;align-items:center;overflow:visible;gap:20px;padding:20px 20px 0}
+  .home-stage .fig{--w:min(280px,74vw)}
+  .home-stage .callout{width:100%;max-width:420px}
+  .home-stage .fig .cap{max-width:none;justify-content:center}
+  .row,.row-map,.row-clean{grid-template-columns:minmax(0,1fr);gap:36px}
+  .row .stage{width:min(100%,460px);margin-inline:auto}
+  .row-map .copy,.row-clean .copy{margin-top:0!important}
+  .row-clean .stage{order:2}
+}
+
+/* ── 10 ux points ─────────────────── */
+.ux{padding:80px 0}
+.ux h2{margin-top:20px;font-size:clamp(24px,calc(var(--u)*.0188),36px);line-height:1.38;letter-spacing:-.02em;text-wrap:balance}
+.ux-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-top:40px;align-items:start}
+.ux-card{padding:28px 25px 26px;border-radius:20px;background:linear-gradient(135deg,rgba(255,255,255,.78),rgba(255,255,255,.42));border:1px solid rgba(255,255,255,.95);backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);box-shadow:0 14px 36px rgba(0,51,61,.08);transition:transform .45s var(--ease),box-shadow .45s}
+.ux-card:hover{transform:translateY(-8px);box-shadow:0 26px 48px -18px rgba(0,51,61,.3)}
+.ux-card small{font-weight:700;font-size:13px;color:var(--cyan-text)}
+.ux-card h3{margin-top:14px;font-size:19px;line-height:26px}
+.ux-card p{margin-top:14px;font-size:14px;line-height:22px;color:var(--ink-2)}
+.ux-card em{display:block;margin-top:14px;padding-top:14px;border-top:1px solid rgba(26,28,28,.08);font-style:normal;font-weight:700;font-size:13px;line-height:20px;color:var(--cyan-text)}
+@media (max-width:1100px){.ux-grid{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:560px){.ux-grid{grid-template-columns:1fr}}
+
+/* ── 12 outro ─────────────────────── */
+.outro{position:relative;padding:clamp(96px,calc(var(--u)*.073),140px) 0;background:linear-gradient(100deg,var(--cyan-500),var(--cyan-300));color:#fff;text-align:center;overflow:hidden}
+.outro img{width:min(271px,60vw);height:auto;margin:0 auto}
+.outro h2{margin-top:24px;font-size:20px;line-height:30px}
+.outro p{margin-top:24px;font-size:13px;line-height:22px}
+.outro a{display:inline-flex;align-items:center;gap:8px;margin-top:32px;height:44px;padding:0 22px;border-radius:999px;background:rgba(255,255,255,.22);border:1px solid rgba(255,255,255,.7);font-weight:700;font-size:14px;transition:background .25s,transform .25s var(--ease)}
+.outro a[hidden]{display:none}
+.outro a:hover{background:rgba(255,255,255,.36);transform:translateY(-2px)}
+
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{animation-duration:.01ms!important;animation-delay:0s!important;transition-duration:.01ms!important;transition-delay:0s!important}
+  .rv{opacity:1;transform:none}
+}
+</style>
+</head>
+<body>
+
+<header class="nav" id="nav">
+  <div class="wrap">
+    <a class="nav-logo" href="#hero" aria-label="CLOK 처음으로"><img src="assets/logo.svg" alt="CLOK" width="83" height="26"></a>
+    <nav class="nav-links" aria-label="섹션">
+      <a href="#overview">Overview</a>
+      <a href="#solution">Solution</a>
+      <a href="#persona">Persona</a>
+      <a href="#flow">Flow</a>
+      <a href="#brand">Brand</a>
+      <a href="#function">Function</a>
+      <a href="#features">Features</a>
+      <a href="#ux">UX Points</a>
+    </nav>
+  </div>
+  <div class="progress" id="progress"></div>
+</header>
+
+<nav class="side" id="side" aria-label="섹션 바로가기">
+  <button class="side-arrow" data-dir="-1" aria-label="이전 섹션"><svg viewBox="0 0 14 14" fill="none"><path d="M3 8.5L7 4.5l4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+  <ol>
+    <li><a href="#hero"><span>Intro</span><i></i></a></li>
+    <li><a href="#overview"><span>Overview</span><i></i></a></li>
+    <li><a href="#solution"><span>Solution</span><i></i></a></li>
+    <li><a href="#persona"><span>Persona</span><i></i></a></li>
+    <li><a href="#journey"><span>Journey Map</span><i></i></a></li>
+    <li><a href="#flow"><span>Flowchart</span><i></i></a></li>
+    <li><a href="#brand"><span>Brand</span><i></i></a></li>
+    <li><a href="#function"><span>5개의 탭</span><i></i></a></li>
+    <li><a href="#clean"><span>스마트 정리</span><i></i></a></li>
+    <li><a href="#features"><span>Onboarding</span><i></i></a></li>
+    <li><a href="#f-home"><span>Home</span><i></i></a></li>
+    <li><a href="#f-record"><span>Record</span><i></i></a></li>
+    <li><a href="#f-map"><span>Map</span><i></i></a></li>
+    <li><a href="#f-alert"><span>Alert</span><i></i></a></li>
+    <li><a href="#f-clean"><span>Clean</span><i></i></a></li>
+    <li><a href="#ux"><span>UX Points</span><i></i></a></li>
+  </ol>
+  <button class="side-arrow" data-dir="1" aria-label="다음 섹션"><svg viewBox="0 0 14 14" fill="none"><path d="M3 5.5l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+</nav>
+
+<main>
+
+<!-- ═════════ 01 HERO ═════════ -->
+<section class="hero" id="hero">
+  <div class="hero-art" id="heroArt"><img src="assets/hero-phones.png" alt="CLOK 앱의 분석 완료 화면과 보안 점수 82점이 표시된 홈 화면" width="3840" height="2753"></div>
+  <canvas class="hero-canvas" id="heroCanvas" aria-hidden="true"></canvas>
+  <div class="wrap hero-copy hero-in">
+    <button class="hero-logo hide" id="heroLogo" style="--i:0" aria-label="CLOK 로고 — 누르면 다시 조립됩니다"><img src="assets/logo.svg" alt="CLOK" width="508" height="159"></button>
+    <h1 style="--i:16">흩어진 기록을 찾고, 알리고, 정리까지.</h1>
+    <p class="hero-intro" style="--i:17">한 번 쓰고 잊은 계정, 무심코 허용한 앱 권한, 사진첩 속 신분증까지. 보이지 않던 내 정보를 한눈에 보여 주고 버튼 몇 번으로 정리하는 개인정보 보호&nbsp;앱</p>
+    <ul class="hero-stats" style="--i:18" aria-label="첫 분석 결과 예시">
+      <li><b><span class="n" data-count="12">12</span><small>개</small></b><span>방치 계정</span></li>
+      <li class="risk"><b><span class="n" data-count="4">4</span><small>건</small></b><span>위험 권한</span></li>
+      <li><b><span class="n" data-count="82">82</span><small>/ 100</small></b><span>보안 점수</span></li>
+    </ul>
+    <div class="hero-credit" style="--i:19">
+      <p>2026 HSVD<br>Graduation Exhibition</p>
+      <p>Contents Design Studio<br>Privacy Protection Application ‘CLOK’</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════ 02 OVERVIEW · BACKGROUND ═════════ -->
+<section class="overview" id="overview">
+  <div class="wrap">
+    <p class="eyebrow rv">OVERVIEW</p>
+    <h2 class="rv" style="--d:.1s">‘보이지 않는 기록’<br>관리할 수 없던 내 개인정보</h2>
+    <p class="rv" style="--d:.2s">우리는 생각보다 많은 곳에 나를 남기고 다닙니다. 잊어버린 쇼핑몰 계정, 무심코 허용한 앱 권한, 사진첩 어딘가의 신분증 사진. 눈에 보이지 않는 기록은 관리할 생각조차 하기 어렵고, 유출 사고가 난 뒤에야 존재를 알게 됩니다. CLOK은 내 정보가 어디에 얼마나 위험하게 남았는지 한눈에 보여 주고 버튼 몇 번으로 정리까지 잇습니다.</p>
+  </div>
+</section>
+
+<section class="bg1" id="background">
+  <div class="wrap">
+    <div class="head rv">
+      <p class="eyebrow">BACKGROUND 1</p>
+      <h2 class="title">개인정보 우려는 커졌지만, 정리 행동은 부족하다</h2>
+    </div>
+    <div class="stats">
+      <article class="stat hot rv" style="--d:.05s"><b><span data-count="98">98</span>만 명</b><p>동의 없이 민감정보가<br>광고 타기팅에 활용</p><small>Meta 과징금 · AP · Reuters</small></article>
+      <article class="stat hot rv" style="--d:.12s"><b><span data-count="307">307</span>건 · <span data-count="56">56</span>%</b><p>2024 개인정보 유출 신고<br>그중 해킹이 절반 이상</p><small>개인정보보호위원회 · KISA</small></article>
+      <article class="stat rv" style="--d:.19s"><b>인식 ≠ 행동</b><p>위험을 알아도 정보 제공 행동은<br>달라지지 않는 인식-행동 격차</p><small>Privacy cognition &amp; disclosure (2020)</small></article>
+      <article class="stat rv" style="--d:.26s"><b>이해 불가</b><p>사용자는 동의 · 정책 내용을<br>실제로 이해하기 어렵다</p><small>Social media privacy policies (2023)</small></article>
+    </div>
+    <div class="insight rv" style="--d:.2s"><span>INSIGHT</span><p>위험은 커지는데, 내 정보가 어디에 남았는지 알 길이 없다 — 보이게 만드는 게 먼저</p></div>
+  </div>
+</section>
+
+<!-- ═════════ 03 SOLUTION ═════════ -->
+<section class="solution" id="solution">
+  <div class="wrap-s">
+    <div class="head rv">
+      <p class="tag"><b>SOLUTION</b>·  핵심 가치 세 가지</p>
+      <h2>CLOK의 모든 화면은<br>"보고 → 알고 → 정리하는" 세 단계를 따라 움직입니다</h2>
+    </div>
+    <div class="values">
+      <article class="value rv" style="--d:.05s"><i>01</i><small>SEE</small><h3>찾아 준다</h3><p>잊고 있던 계정 · 권한 · 민감정보를<br>한곳에서 확인</p><em>첫 실행 분석 · 기록 대시보드 · 기기 내 민감정보 탐지</em></article>
+      <span class="arrow rv" style="--d:.15s" aria-hidden="true">→</span>
+      <article class="value rv" style="--d:.2s"><i>02</i><small>KNOW</small><h3>알려 준다</h3><p>위험한 일이 생기면 무엇이<br>얼마나 위험한지 바로 앎</p><em>보안 점수 · 보안 알림 타임라인 · 접속 위치 지도</em></article>
+      <span class="arrow rv" style="--d:.3s" aria-hidden="true">→</span>
+      <article class="value rv" style="--d:.35s"><i>03</i><small>CLEAN</small><h3>정리해 준다</h3><p>복잡한 설정 없이<br>버튼 몇 번으로 정리</p><em>추천 정리 카드 · 일괄 삭제 · 정리 전후 점수 비교</em></article>
+    </div>
+    <div class="points">
+      <article class="point rv"><h3>오프라인 퍼스트가 아닌, 기록 퍼스트</h3><p>"내 정보가 어디에, 얼마나, 얼마나 위험하게" 남아 있는지를 숫자와 그림으로 먼저 보여 줍니다.</p></article>
+      <article class="point rv" style="--d:.1s"><h3>위험 → 조치 → 완료, 한 흐름으로</h3><p>보안 지식 없이도 알림에서 바로 비밀번호 변경·차단·삭제까지 이어지고, 완료 화면으로 안도감을 줍니다.</p></article>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════ 04 PERSONA ═════════ -->
+<section class="persona" id="persona">
+  <div class="wrap">
+    <div class="head rv">
+      <p class="eyebrow">PERSONA</p>
+      <h2 class="title">누가, 어떤 순간에 CLOK을 여는가</h2>
+    </div>
+    <div class="people">
+      <button class="person rv" data-lane="4" style="--d:.05s">
+        <span class="bubble">"내 정보가 어디에 얼마나 있는지부터 알고 싶어요"</span>
+        <span class="who"><span class="avatar"><img src="assets/persona-1.png" alt="" width="136" height="136"></span><span><b>김하늘</b><span>27세 · 여 · 마케터</span><em>처음 시작 · 유출 알림 대응</em></span></span>
+        <span class="desc">유출 뉴스를 보고 처음 설치. 흩어진 계정 · 권한 · 유출 여부를 한곳에서 확인하고, 알림을 받으면 바로 비밀번호 변경까지 끝내고 싶다.</span>
+        <span class="go">알림 탭 흐름 보기 <span aria-hidden="true">→</span></span>
+      </button>
+      <button class="person rv" data-lane="3" style="--d:.12s">
+        <span class="bubble">"저는 한국에 있는데, 상파울루에서 로그인됐대요"</span>
+        <span class="who"><span class="avatar"><img src="assets/persona-2.png" alt="" width="136" height="136"></span><span><b>박준서</b><span>32세 · 남 · 개발자</span><em>낯선 접속 차단</em></span></span>
+        <span class="desc">해외 로그인 알림이 와도 어느 기기인지 확인할 길이 없었다. 누가 어디서 접속했는지 지도에서 보고 그 자리에서 차단하고 싶다.</span>
+        <span class="go">지도 탭 흐름 보기 <span aria-hidden="true">→</span></span>
+      </button>
+      <button class="person rv" data-lane="2" style="--d:.19s">
+        <span class="bubble">"예전에 찍어 둔 신분증 사진이 어디 있는지 모르겠어요"</span>
+        <span class="who"><span class="avatar"><img src="assets/persona-3.png" alt="" width="136" height="136"></span><span><b>이서연</b><span>24세 · 여 · 대학생</span><em>휴대폰 정리</em></span></span>
+        <span class="desc">휴대폰 교체 전 사진첩 정리 중 신분증 · 카드 사진이 여기저기 있음을 알았다. 기기 속 민감정보를 자동으로 찾아 한 번에 정리하고 싶다.</span>
+        <span class="go">기록 탭 흐름 보기 <span aria-hidden="true">→</span></span>
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════ 04a USER JOURNEY MAP ═════════ -->
+<section class="journey" id="journey">
+  <div class="wrap">
+    <div class="head rv">
+      <p class="eyebrow">USER JOURNEY MAP</p>
+      <h2 class="title">김하늘의 하루 — 막연한 불안에서 "내가 관리하고 있다"는 안심까지</h2>
+    </div>
+    <div class="jm-scroll rv" tabindex="0" role="region" aria-label="사용자 여정 지도 표">
+      <div class="jm" id="jm"></div>
+    </div>
+    <p class="jm-note rv">대표 페르소나 김하늘(처음 시작 · 유출 알림 대응)을 기준으로, 서비스 이용 전 → 중 → 후의 감정 변화를 정리했습니다.</p>
+  </div>
+</section>
+
+<!-- ═════════ 05 FLOWCHART ═════════ -->
+<section class="flow" id="flow">
+  <div class="wrap-f">
+    <div class="head rv">
+      <p class="eyebrow">FLOWCHART</p>
+      <h2 class="title">상황마다 시작하는 탭이 다르다</h2>
+      <p class="flow-sub">첫 실행과 하단 탭 5개의 핵심 흐름이에요. 모든 조치는 끝나면 시작한 화면으로 돌아와요.</p>
+      <ul class="legend" aria-label="범례">
+        <li><i class="l-start"></i>탭 시작</li><li><i></i>화면</li><li><i class="l-ghost"></i>오버레이 · 토스트</li><li><i class="l-dia"></i>분기</li><li><i class="l-end"></i>완료</li>
+      </ul>
+    </div>
+    <div class="flow-map fit" id="flowMap"><div class="fit-inner"></div></div>
+    <p class="flow-hint rv">단계를 누르면 그 경로를 따라 다시 재생됩니다.</p>
+    <div class="flow-list" id="flowList"></div>
+  </div>
+</section>
+
+<!-- ═════════ 06 BRAND ═════════ -->
+<section class="brand" id="brand">
+  <div class="wrap">
+    <div class="head rv">
+      <p class="eyebrow">BRAND</p>
+      <h2 class="title">흩어진 내 정보를 모아, 한 번에 잠그는 CLOK</h2>
+    </div>
+    <div class="brand-grid">
+      <div class="rv">
+        <div class="sub"><h3>ICON</h3><p>스톱워치 버튼 · 열쇠 구멍 · 지켜보는 눈동자를 하나의 원 언어로 그린 심볼</p></div>
+        <div class="icon-row">
+          <figure><div class="grid-box"><img src="assets/icon-grid.svg" alt="CLOK 심볼 구성 그리드" width="328" height="100"></div><figcaption>ICON GRID</figcaption></figure>
+          <figure><div class="app-box"><img src="assets/app-icon.svg" alt="CLOK 앱 아이콘" width="194" height="194"></div><figcaption>APP ICON</figcaption></figure>
+          <figure class="word"><img src="assets/logo.svg" alt="CLOK 워드마크" width="322" height="100"><figcaption>Clock + Lock</figcaption></figure>
+        </div>
+      </div>
+      <div class="rv" style="--d:.1s">
+        <div class="sub"><h3>COLOR</h3><p>믿음을 주는 시안이 메인, 위험 · 주의 · 안전 상태색만 따로 써서 경고가 바로 보이게</p></div>
+        <div class="swatches" id="swatches">
+          <button class="sw" style="--c:#E6F9FC" data-hex="#E6F9FC"><i></i><b>cyan 50</b><span>#E6F9FC</span></button>
+          <button class="sw" style="--c:#C2F1F7" data-hex="#C2F1F7"><i></i><b>cyan 100</b><span>#C2F1F7</span></button>
+          <button class="sw" style="--c:#51E5F5" data-hex="#51E5F5"><i></i><b>cyan 300</b><span>#51E5F5</span></button>
+          <button class="sw" style="--c:#01BED7" data-hex="#01BED7"><i></i><b>cyan 500</b><span>#01BED7</span></button>
+          <button class="sw" style="--c:#0B8FA0" data-hex="#0B8FA0"><i></i><b>cyan 700</b><span>#0B8FA0</span></button>
+          <button class="sw" style="--c:#F4F7F8" data-hex="#F4F7F8"><i></i><b>gray 50</b><span>#F4F7F8</span></button>
+          <button class="sw" style="--c:#9AA0A2" data-hex="#9AA0A2"><i></i><b>gray 400</b><span>#9AA0A2</span></button>
+          <button class="sw" style="--c:#5F6669" data-hex="#5F6669"><i></i><b>gray 600</b><span>#5F6669</span></button>
+          <button class="sw" style="--c:#1A1C1C" data-hex="#1A1C1C"><i></i><b>gray 900</b><span>#1A1C1C</span></button>
+          <button class="sw" style="--c:#FF4B4B" data-hex="#FF4B4B"><i></i><b>red · 위험</b><span>#FF4B4B</span></button>
+        </div>
+      </div>
+      <div class="rv">
+        <div class="sub"><h3>TYPOGRAPHY</h3><p>로고의 둥근 획과 이어지는 서체, 작은 크기에서도 숫자가 또렷하게</p></div>
+        <div class="type-top"><b>Aa</b><span>LINE Seed Sans KR</span></div>
+        <ul class="weights">
+          <li style="font-weight:100"><span>Thin</span>흩어진 내 기록을, 한 번에 정리해요. 클록 CLOK</li>
+          <li style="font-weight:400"><span>Regular</span>흩어진 내 기록을, 한 번에 정리해요. 클록 CLOK</li>
+          <li style="font-weight:700"><span>Bold</span>흩어진 내 기록을, 한 번에 정리해요. 클록 CLOK</li>
+        </ul>
+      </div>
+      <div class="rv" style="--d:.1s">
+        <div class="sub"><h3>ICONS</h3><p>하단 탭 5개와 핵심 기능 아이콘 — 로고처럼 둥근 선 끝으로 통일</p></div>
+        <ul class="icons">
+          <li><img src="assets/ic-home.svg" alt="" width="36" height="36">홈</li>
+          <li><img src="assets/ic-record.svg" alt="" width="36" height="36">기록</li>
+          <li><img src="assets/ic-map.svg" alt="" width="36" height="36">지도</li>
+          <li><img src="assets/ic-bell.svg" alt="" width="36" height="36">알림</li>
+          <li><img src="assets/ic-clean.svg" alt="" width="36" height="36">정리</li>
+          <li><img src="assets/ic-shield.svg" alt="" width="36" height="36">보안</li>
+          <li><img src="assets/ic-alert.svg" alt="" width="36" height="36">위험 감지</li>
+          <li><img src="assets/ic-location.svg" alt="" width="36" height="36">접속 위치</li>
+          <li><img src="assets/ic-account-delete.svg" alt="" width="36" height="36">계정 삭제</li>
+          <li><img src="assets/ic-permission-off.svg" alt="" width="36" height="36">권한 회수</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════ 07 MAIN FUNCTION 1 ═════════ -->
+<section class="seq" id="function">
+  <div class="seq-sticky">
+    <div class="head wrap">
+      <p class="eyebrow">MAIN FUNCTION 1 · 5개의 탭</p>
+      <h2 class="title">탭 하나가 질문 하나에 답합니다</h2>
+    </div>
+    <div class="seq-body wrap">
+      <div class="seq-copy" aria-live="polite">
+        <div class="seq-item on"><small>01 / 05</small><b>홈</b><p>지금 얼마나 안전한가?</p></div>
+        <div class="seq-item"><small>02 / 05</small><b>기록</b><p>어디에 남아 있나?</p></div>
+        <div class="seq-item"><small>03 / 05</small><b>지도</b><p>누가 어디서 접속했나?</p></div>
+        <div class="seq-item"><small>04 / 05</small><b>알림</b><p>무슨 일이 일어났나?</p></div>
+        <div class="seq-item"><small>05 / 05</small><b>정리</b><p>무엇부터 정리할까?</p></div>
+      </div>
+      <div class="seq-stage">
+        <div class="phone" id="seqPhone">
+          <div class="phone-screen">
+            <img class="on" src="assets/screen-home.png" alt="홈 탭 화면 — 보안 점수 82점" width="865" height="1875">
+            <img src="assets/screen-record.png" alt="기록 탭 화면 — 기기 내 민감정보 탐지" width="865" height="2368" loading="lazy">
+            <img src="assets/screen-map.png" alt="지도 탭 화면 — 접속 위치 지도" width="1572" height="3408" loading="lazy">
+            <img src="assets/screen-alert.png" alt="알림 탭 화면 — 최근 보안 알림" width="771" height="4000" loading="lazy">
+            <img src="assets/screen-clean.png" alt="정리 탭 화면 — 정리 추천" width="865" height="1875" loading="lazy">
+          </div>
+        </div>
+      </div>
+      <div class="seq-tabs" role="tablist" aria-label="앱 탭">
+        <button class="on" role="tab"><i><img src="assets/ic-home.svg" alt="" width="24" height="24"></i><span>홈</span></button>
+        <button role="tab"><i><img src="assets/ic-record.svg" alt="" width="24" height="24"></i><span>기록</span></button>
+        <button role="tab"><i><img src="assets/ic-map.svg" alt="" width="24" height="24"></i><span>지도</span></button>
+        <button role="tab"><i><img src="assets/ic-bell.svg" alt="" width="24" height="24"></i><span>알림</span></button>
+        <button role="tab"><i><img src="assets/ic-clean.svg" alt="" width="24" height="24"></i><span>정리</span></button>
+      </div>
+    </div>
+    <div class="seq-bar"><i id="seqBar"></i></div>
+  </div>
+</section>
+
+<!-- ═════════ 08 MAIN FUNCTION 2 ═════════ -->
+<section class="f2" id="clean">
+  <div class="wrap">
+    <div class="head rv">
+      <p class="eyebrow">MAIN FUNCTION 2 · RECORD · CLEAN</p>
+      <h2 class="title">보이지 않던 기록을 보이게, 버튼 한 번으로 정리까지</h2>
+    </div>
+    <div class="f2-stage fit idle rv" id="f2">
+      <div class="fit-inner">
+        <div class="zoom" style="left:368px;top:27px;width:283px;height:418px"><img src="assets/zoom-line-usage-top.svg" alt=""></div>
+        <div class="zoom flip" style="left:178px;top:482px;width:177px;height:161px"><img src="assets/zoom-line-usage-bottom.svg" alt=""></div>
+        <div class="zoom flip" style="left:4px;top:321px;width:41px;height:37px"><img src="assets/zoom-line-usage-card.svg" alt=""></div>
+        <div class="zoom" style="left:1005px;top:49px;width:111px;height:339px"><img src="assets/zoom-line-score-top.svg" alt=""></div>
+        <div class="zoom" style="left:1035px;top:411px;width:270px;height:185px"><img src="assets/zoom-line-score-bottom.svg" alt=""></div>
+        <div class="zoom" style="left:1343px;top:305px;width:117px;height:80px"><img src="assets/zoom-line-score-card.svg" alt=""></div>
+        <div class="abs f2-phones fit">
+          <div class="fit-inner">
+            <div class="ph ph-clean"><div class="phone"><div class="phone-screen">
+              <img src="assets/phone-clean.png" alt="정리 추천 화면 — 현재 보안 점수 82점과 스마트 정리 버튼" width="1572" height="3408" loading="lazy">
+              <div class="done" aria-hidden="true"><i><svg viewBox="0 0 40 40" fill="none"><path d="M10 21l7 7 13-15" stroke="#1A1C1C" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg></i>정리 완료<small>보안 점수 92점</small></div>
+            </div></div></div>
+            <div class="ph ph-record"><div class="phone"><div class="phone-screen"><img src="assets/phone-record.png" alt="디지털 기록 관리 화면 — 서비스별 기록량" width="1572" height="3408" loading="lazy"></div></div></div>
+            <div class="zoom" style="left:38px;top:404px;width:283px;height:248px"><img src="assets/zoom-frame-usage.svg" alt=""></div>
+            <div class="zoom" style="left:417px;top:373px;width:288px;height:244px"><img src="assets/zoom-frame-score.svg" alt=""></div>
+          </div>
+        </div>
+        <div class="abs f2-usage" style="left:0;top:11px">
+          <img class="piece" src="assets/piece-usage.png" alt="서비스별 기록량 — Google 계정 42%, 쇼핑·결제 28%, 신분증·금융 OTP 22%(민감), 위치 8%" width="355" height="302" style="width:355px;height:302px" loading="lazy">
+          <div class="f2-text abs" style="left:4px;top:356px;width:381px"><h3>서비스별 기록량</h3><p>면적이 클수록 남은 데이터가 많아요. <br>신분증 · 금융 정보는 빨간 "민감"으로 <br>표시해 먼저 눈에 띄게 했어요.</p></div>
+        </div>
+        <div class="abs f2-clean" style="left:1103.7px;top:11px">
+          <div class="clean-zone">
+            <div class="clean-card">
+              <h4>현재 보안 점수</h4>
+              <div class="score"><span id="score">82</span>점</div>
+              <div class="gain" id="gain">정리하면 92점 · ▲10</div>
+              <div class="meter" role="img" aria-label="보안 점수 막대"><u></u><i></i></div>
+              <button class="clean-btn" id="cleanBtn">스마트 정리</button>
+            </div>
+          </div>
+          <div class="f2-text abs" style="left:4px;top:338.4px;width:381px"><h3>스마트 정리</h3><p>정리하면 오를 점수를 먼저 보여 주고, 버튼 한 번으로 정리한 뒤 결과를 리포트로 보여 줘요.</p></div>
+          <p class="after abs" style="left:91px;top:489px">정리 후 →</p>
+          <img class="piece report abs" src="assets/piece-report.png" alt="정리 리포트 — 삭제된 계정 12개, 회수된 민감 권한 3개, 확보된 저장 공간 1.5GB, 보안 점수 82에서 92로 향상" width="224" height="234" style="left:164.13px;top:438px;width:224.168px;height:234px" loading="lazy">
+          <p class="sr" aria-live="polite" id="cleanLive"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════ 09 KEY FEATURES ═════════ -->
+<div class="glow">
+  <section class="kf-head" id="features">
+    <div class="wrap-f rv">
+      <p class="tag"><b>KEY FEATURES</b>·  주요 기능</p>
+      <h2>상황에 맞는 탭에서 시작해,<br>위험 → 조치 → 완료까지 한 흐름으로</h2>
+    </div>
+  </section>
+
+  <section class="feat" id="f-onboarding" style="padding-top:110px">
+    <div class="wrap-f">
+      <div class="rv">
+        <p class="tag"><b>ONBOARDING</b>·  처음 시작</p>
+        <h3>세 장의 소개부터<br>첫 분석 결과까지, 90초</h3>
+        <p class="lead">세 장의 소개로 CLOK이 하는 일을 이해하고, 권한마다 필요한 이유를 확인한 뒤 허용하면 메일 · 위치 · 카드 정보를 스캔해 첫 분석 결과를 보여 줍니다.</p>
+      </div>
+      <div class="stage trio fit rv"><div class="fit-inner" style="height:1010px">
+        <figure class="abs fig" style="left:11px;top:11px"><div class="dev"><img src="assets/v2/onb-device.png" alt="온보딩 화면 — 흩어진 내 정보, 한눈에 확인하세요" width="393" height="852" loading="lazy"><i class="isl"></i></div><figcaption class="cap" style="top:957px"><b>1</b>온보딩 · 세 장으로 앱을 이해해요</figcaption></figure>
+        <figure class="abs fig" style="left:490px;top:0"><div class="scr"><img src="assets/v2/onb-perm.png" alt="권한 설정 화면 — 분석을 위해 권한이 필요해요" width="338" height="733" loading="lazy"></div><figcaption class="cap" style="top:968px"><b>2</b>권한 설정 · 필요한 이유부터 설명해요</figcaption></figure>
+        <figure class="abs fig" style="left:903px;top:0"><div class="scr"><img src="assets/v2/onb-done.png" alt="분석 완료 화면 — 방치 계정 12개, 위험 권한 4건" width="338" height="733" loading="lazy"></div><figcaption class="cap" style="top:968px"><b>3</b>분석 완료 · 방치 계정 · 위험 항목</figcaption></figure>
+      </div></div>
+    </div>
+  </section>
+
+  <section class="feat" id="f-home">
+    <div class="wrap-f">
+      <div class="rv">
+        <p class="tag"><b>HOME</b>·  홈 · 보안 점수</p>
+        <h3>지금 내 정보는 얼마나 안전한가?</h3>
+        <p class="lead">보안 점수 링과 오늘의 요약을 한눈에. 방치된 계정으로 바로 이동해 개별 · 일괄 삭제할 수 있고, 끝나면 브랜드 색이 화면 전체로 퍼지며 완료 화면으로 이어집니다.</p>
+      </div>
+      <div class="stage trio home-stage fit rv" style="margin-top:32px"><div class="fit-inner" style="height:1060px">
+        <figure class="abs fig" style="left:0;top:20px"><div class="dev"><img src="assets/v2/home-device.png" alt="홈 대시보드 화면 — 보안 점수 82점" width="393" height="852" loading="lazy"><i class="isl"></i></div><figcaption class="cap" style="top:870px"><b>1</b>홈 대시보드</figcaption></figure>
+        <i class="abs ln" style="left:360px;top:150px;width:110px"></i>
+        <div class="abs callout glass" style="left:480px;top:118px"><h4>하루 한 줄 인사</h4><p>오늘의 보안 상태를 "~해요" 문장으로 요약해 먼저 보여 줘요.</p></div>
+        <i class="abs ln" style="left:395px;top:370px;width:75px;--d:.15s"></i>
+        <div class="abs callout glass" style="left:480px;top:338px"><h4>보안 점수 링</h4><p>0~100점. 정리할수록 올라가고, 위험이 생기면 색이 바뀌어요.</p></div>
+        <i class="abs ln" style="left:395px;top:560px;width:75px;--d:.3s"></i>
+        <div class="abs callout glass" style="left:480px;top:528px"><h4>안전함 · 실시간 보호중 배지</h4><p>지금 상태를 두 개의 칩으로. 위험할 때만 빨간색이 나타나요.</p></div>
+        <i class="abs ln" style="left:395px;top:720px;width:75px;--d:.45s"></i>
+        <div class="abs callout glass" style="left:480px;top:688px"><h4>방치된 계정 바로가기</h4><p>오래 안 쓴 계정 카드로 바로 이동해 개별 · 일괄 삭제할 수 있어요.</p></div>
+        <figure class="abs fig" style="left:880px;top:380px"><div class="scr"><img src="assets/v2/home-accounts.png" alt="방치된 계정 관리 화면 — 전체 12, 개인 9, 업무 3" width="338" height="661" loading="lazy"></div><figcaption class="cap" style="top:-60px;left:-20px"><b>2</b>방치된 계정 관리 · 개인 / 업무로 나눠 보고 일괄 삭제</figcaption></figure>
+      </div></div>
+    </div>
+  </section>
+
+  <section class="feat" id="f-record">
+    <div class="wrap-f">
+      <div class="rv">
+        <p class="tag"><b>RECORD</b>·  기록 · 디지털 기록</p>
+        <h3>내 정보가 어디에 남아 있나?</h3>
+        <p class="lead">서비스별 기록량 트리맵, 기기 속 신분증 · 카드 사진 탐지, 데이터 노출 추이까지. 보안 앱이 오히려 정보를 드러내지 않도록 미리보기는 가려서 보여 줍니다.</p>
+      </div>
+      <div class="stage trio fit rv" style="margin-top:32px"><div class="fit-inner" style="height:960px">
+        <figure class="abs fig" style="left:11px;top:71px"><div class="dev"><img src="assets/v2/rec-device.png" alt="디지털 기록 관리 화면 — 방치 계정 12개와 데이터 노출 흐름" width="393" height="852" loading="lazy"><i class="isl"></i></div><figcaption class="cap" style="top:-71px;left:-11px"><b>1</b>디지털 기록 관리 · 서비스별 기록량</figcaption></figure>
+        <figure class="abs fig" style="left:490px;top:60px"><div class="scr"><img src="assets/v2/rec-breach.png" alt="유출 상세 내역 화면 — A 금융 플랫폼 유출, 위험도 높음" width="338" height="733" loading="lazy"></div><figcaption class="cap" style="top:-60px"><b>2</b>유출 상세 내역 · 어디서 무엇이 새어 나갔는지</figcaption></figure>
+        <figure class="abs fig" style="left:903px;top:60px"><div class="scr"><img src="assets/v2/rec-exposure.png" alt="데이터 노출 상세 화면 — 노출 추이 64건" width="338" height="733" loading="lazy"></div><figcaption class="cap" style="top:-60px"><b>3</b>데이터 노출 상세 · 30일 추이</figcaption></figure>
+      </div></div>
+    </div>
+  </section>
+
+  <section class="feat" id="f-map">
+    <div class="wrap-f row row-map">
+      <div class="stage fit rv"><div class="fit-inner">
+        <div class="abs dev" style="left:88.5px;top:83px;rotate:8deg"><img src="assets/screen-map.png" alt="접속 위치 지도 화면 — 브라질 상파울루 비정상 접근, 대한민국 서울 안전" width="393" height="852" loading="lazy"><i class="isl"></i></div>
+        <figure class="abs fig" style="left:210px;top:590px"><div class="scr"><img src="assets/v2/map-done.png" alt="연결 차단 완료 화면 — 보안 조치가 완료되었습니다" width="338" height="682" loading="lazy"></div></figure>
+        <p class="abs pin" style="left:0;top:150px"><i></i>브라질, 상파울루 · 비정상 접속 감지</p>
+      </div></div>
+      <div class="copy rv" style="margin-top:calc(var(--u)*.12)">
+        <p class="tag"><b>MAP</b>·  지도 · 접속 위치</p>
+        <h3>누가 어디서<br>내 계정에 접속했나?</h3>
+        <p class="lead">세계 지도 위 퍼지는 고리가 있는 빨간 핀으로 비정상 접속을 알리고, 위치 · 시간 · 기기를 확인한 뒤 "연결 차단하기"로 바로 세션을 끊습니다.</p>
+        <ol class="msteps">
+          <li><i>1</i><b>지도 탭</b><span>퍼지는 고리가 있는 빨간 핀과 접속 카드 확인</span></li>
+          <li><i>2</i><b>접속 상세</b><span>위치 · 시간 · 기기를 보고 "연결 차단하기"</span></li>
+          <li><i>3</i><b>차단 중</b><span>진행 링이 차며 세션을 끊는 중</span></li>
+          <li><i>4</i><b>차단 완료</b><span>원격 로그아웃 · IP 차단 결과 확인</span></li>
+        </ol>
+      </div>
+    </div>
+  </section>
+</div>
+
+<section class="feat feat-c" id="f-alert">
+  <div class="wrap-f">
+    <div class="rv">
+      <p class="tag"><b>ALERT</b>·  알림 · 보안 알림</p>
+      <h3>무슨 일이 일어났나?<br>알림에서 조치까지 세 번의 터치</h3>
+      <p class="lead">다크웹 유출 · 로그인 시도 같은 사건을 시간순으로 보고, 카드의 "비밀번호 변경 ›"으로 바로 대응. "확인"을 누르면 보던 알림 위치로 돌아옵니다.</p>
+    </div>
+    <div class="stage trio fit rv" style="text-align:left"><div class="fit-inner" style="height:1000px">
+      <figure class="abs fig" style="left:8px;top:46px"><span class="pill">STEP 1</span><div class="dev"><img src="assets/v2/alert-device.png" alt="보안 알림 센터 화면 — 이번 주 보안 알림 10건" width="393" height="852" loading="lazy"><i class="isl"></i></div><figcaption class="step-cap" style="top:868px"><b>알림 탭</b><span>빨간 점이 붙은 유출 카드</span></figcaption></figure>
+      <span class="abs step-arrow" style="left:439px;top:440px" aria-hidden="true">→</span>
+      <figure class="abs fig" style="left:490px;top:46px"><span class="pill">STEP 2</span><div class="scr"><img src="assets/v2/alert-pw.png" alt="비밀번호 변경 화면" width="338" height="733" loading="lazy"></div><figcaption class="step-cap" style="top:868px"><b>비밀번호 변경</b><span>카드에서 바로 변경</span></figcaption></figure>
+      <span class="abs step-arrow" style="left:855px;top:440px" aria-hidden="true">→</span>
+      <figure class="abs fig" style="left:906px;top:46px"><span class="pill">STEP 3</span><div class="scr"><img src="assets/v2/alert-done.png" alt="변경 완료 화면 — 변경이 완료되었습니다" width="338" height="733" loading="lazy"></div><figcaption class="step-cap" style="top:868px"><b>변경 완료</b><span>색이 퍼지며 완료 → 제자리로</span></figcaption></figure>
+    </div></div>
+  </div>
+</section>
+
+<section class="feat" id="f-clean" style="padding-top:64px">
+  <div class="wrap-f row row-clean">
+    <div class="copy rv" style="margin-top:calc(var(--u)*.14)">
+      <p class="tag"><b>CLEAN</b>·  정리 · 정리 추천</p>
+      <h3>무엇부터<br>정리하면 될까?</h3>
+      <p class="lead">추천 정리 카드로 계정 삭제 · 권한 회수 · 광고 정보 초기화를 한 번에. 정리하면 오를 점수를 미리 보여 주어 작은 성취감이 꾸준한 관리 습관으로 이어집니다.</p>
+      <p class="scoreline"><b>82</b><span aria-hidden="true">→</span><b class="to" data-count="92" data-from="82">92</b><small><em>보안 점수</em>정리 전 → 정리 후 미리보기</small></p>
+    </div>
+    <div class="stage fit rv"><div class="fit-inner">
+      <figure class="abs fig" style="left:0;top:20px"><div class="dev"><img src="assets/v2/clean-device.png" alt="정리 추천 및 관리 화면 — 이번 달 정리 진행률 2/6, 추천 정리 4개" width="393" height="852" loading="lazy"><i class="isl"></i></div></figure>
+      <figure class="abs fig" style="left:336px;top:247px"><div class="scr"><img src="assets/v2/clean-done.png" alt="스마트 정리 완료 화면 — 삭제된 계정 12개, 회수된 민감 권한 3개, 확보된 저장 공간 1.5GB" width="338" height="728" loading="lazy"></div></figure>
+    </div></div>
+  </div>
+</section>
+
+<!-- ═════════ 10 UX POINTS ═════════ -->
+<section class="ux glow" id="ux">
+  <div class="wrap-s">
+    <div class="rv">
+      <p class="tag"><b>UX POINTS</b>·  경험 디자인 포인트</p>
+      <h2>개인정보를 다루는 앱이라 "믿고 맡길 수 있다"는 느낌이 가장 중요했습니다</h2>
+    </div>
+    <div class="ux-grid">
+      <article class="ux-card rv" style="--d:.03s"><small>01</small><h3>브랜드로 여는 첫인상</h3><p>열쇠 구멍 점이 시계처럼 돌다가 제자리에 들어가며 잠기는 스플래시</p><em>→ 로딩 시간마저 "보호받는 중"이라는 메시지로</em></article>
+      <article class="ux-card rv" style="--d:.09s"><small>02</small><h3>작업이 끝나는 순간</h3><p>진행 링이 차면 브랜드 색이 화면 전체로 퍼진 뒤 완료 화면으로</p><em>→ 삭제 · 차단이 "확실히 끝났다"는 안도감</em></article>
+      <article class="ux-card rv" style="--d:.15s"><small>03</small><h3>위험은 눈에 띄게</h3><p>빨간 아이콘 뒤로 퍼지는 고리, 지도 위 깜빡이는 위험 핀</p><em>→ 놓치면 안 되는 것만 움직이게 해서 주의를 집중</em></article>
+      <article class="ux-card rv" style="--d:.21s"><small>04</small><h3>되돌릴 수 없는 일은 한 번 더</h3><p>사진 · 계정 삭제 전 "정말 삭제할까요?" 재확인</p><em>→ 실수로 지우는 불안을 없애기 위해</em></article>
+      <article class="ux-card rv" style="--d:.06s"><small>05</small><h3>보여 주되 노출하지 않기</h3><p>신분증 사진 미리보기를 가려서 보여 줌</p><em>→ 보안 앱이 오히려 정보를 드러내지 않도록</em></article>
+      <article class="ux-card rv" style="--d:.12s"><small>06</small><h3>길을 잃지 않게</h3><p>화면은 맨 위부터, 조치 후 보던 자리로 복귀, 탭 재터치 시 맨 위로</p><em>→ 여러 화면을 오가도 흐름이 끊기지 않도록</em></article>
+      <article class="ux-card rv" style="--d:.18s"><small>07</small><h3>차분한 움직임</h3><p>카드는 하나씩 떠오르고, 반복 애니메이션은 느리고 작게</p><em>→ 정보가 많은 화면도 정신없지 않게</em></article>
+      <article class="ux-card rv" style="--d:.24s"><small>08</small><h3>친구가 알려 주듯</h3><p>짧은 "~해요" 문장, 두 줄 이내, 전문 용어 없이</p><em>→ 민감한 주제를 겁주지 않고 친근하게</em></article>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ═════════ 12 OUTRO ═════════ -->
+<footer class="outro" id="outro">
+  <div class="wrap rv">
+    <img src="assets/v2/logo-white.svg" alt="CLOK" width="271" height="85">
+    <h2>흩어진 내 디지털 기록을 찾고, 알리고, 정리까지.</h2>
+    <p>시각정보디자인학과<br>2026 Hansei University Visual Communication Design Graduation Exhibition</p>
+    <a id="protoBtn" hidden target="_blank" rel="noopener">프로토타입 체험하기 <span aria-hidden="true">→</span></a>
+  </div>
+</footer>
+
+<script>
+(() => {
+'use strict';
+/* 프로토타입 주소를 넣으면 맨 아래에 "프로토타입 체험하기" 버튼이 나타납니다. */
+const PROTOTYPE_URL = '';
+
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+const easeInOut = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+const easeOut = t => 1 - Math.pow(1 - t, 3);
+const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
+
+if (PROTOTYPE_URL) { const b = $('#protoBtn'); b.href = PROTOTYPE_URL; b.hidden = false; }
+
+/* ── 저니맵 표 ── */
+const JM = {
+  stages: ['1  인지', '2  설치 · 시작', '3  첫 분석', '4  위기', '5  대응', '6  정리 · 안심'],
+  act: ['대형 유출 뉴스를 보고 내 정보도 걱정됨', '앱 설치 → 온보딩 → 간편 가입 · 권한 허용', '레이더 스캔 후 분석 결과 확인', '"이메일이 다크웹에 노출됐어요" 알림 수신', '카드에서 바로 비밀번호 변경 → 완료', '추천 정리 카드로 계정 · 권한 정리, 점수 상승'],
+  think: ['"나도 털린 거 아닐까? 근데 뭘 확인해야 하지?"', '"권한을 왜 이렇게 많이 달라고 하지?"', '"계정이 12개나 방치돼 있었다고?"', '"지금 당장 뭘 해야 하지?"', '"생각보다 금방 끝났네"', '"이제 내가 관리하고 있다는 느낌이야"'],
+  feel: [[95, '#FF4B4B'], [75, '#FF9500'], [82, '#FF9500'], [110, '#FF4B4B'], [51, '#22B04B'], [25, '#22B04B']],
+  pain: ['어디서부터 봐야 할지 모름', '권한 요청이 부담스러움', '생각보다 많아서 압도됨', '급한데 대응 방법을 모름', '설정 화면을 찾아다니는 번거로움', '한 번 하고 잊어버릴까 걱정'],
+  fix: ['스플래시 · 온보딩에서 "찾고 · 알리고 · 정리" 세 단계를 먼저 보여 줌', '권한마다 필요한 이유를 설명하고 단계별로 요청', '결과를 숫자 · 30일 캘린더로 요약하고 위험 항목부터 표시', '알림 카드에 바로 "비밀번호 변경 ›" 동작을 붙임', '브랜드 전환으로 완료를 확실히 알리고 보던 위치로 복귀', '정리 전후 점수 82 → 92로 성취감, 알림으로 다시 점검']
+};
+(() => {
+  /* 띠 배경과 칸이 같은 행에 겹치도록 모든 칸의 행·열을 직접 지정 */
+  const jm = $('#jm'); let h = JM.stages.map((s, i) => `<div class="stage" style="grid-area:1/${i + 2}">${s}</div>`).join('');
+  const row = (r, label, cells, cls, band) => (band ? `<i class="band" style="grid-row:${r}"></i>` : '') + `<div class="lab" style="grid-area:${r}/1">${label}</div>` + cells.map((c, i) => `<div class="cell ${cls}" style="grid-area:${r}/${i + 2}">${c}</div>`).join('');
+  h += row(2, '행동', JM.act, '', true) + row(3, '생각', JM.think, 'think', true);
+  const pts = JM.feel.map(([y], i) => `${(i + .5) / 6 * 600},${y}`).join(' L');
+  h += `<div class="lab" style="grid-area:4/1">감정</div><div class="chart" style="grid-row:4"><span class="axis" style="top:10px">긍정</span><span class="axis" style="bottom:10px">부정</span><svg viewBox="0 0 600 133" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M${pts}"/></svg>${JM.feel.map(([y, c], i) => `<i style="left:${(i + .5) / 6 * 100}%;top:${y}px;--c:${c};--n:${i}"></i>`).join('')}<span class="sr">감정은 인지와 위기 단계에서 가장 낮고, 대응과 정리 단계에서 가장 높아집니다.</span></div>`;
+  h += row(5, '불편', JM.pain, '', true) + row(6, 'CLOK의 해결', JM.fix, 'fix', false);
+  jm.innerHTML = h;
+})();
+
+/* ── fit: 고정 좌표 무대를 컨테이너 폭에 맞춰 축소 ── */
+function fitAll() {
+  for (const box of $$('.fit')) {
+    const inner = box.firstElementChild;
+    const W = parseFloat(getComputedStyle(box).getPropertyValue('--fit-w'));
+    inner.style.transform = ''; box.style.height = '';
+    if (!W) continue;
+    const k = Math.min(1, box.clientWidth / W);
+    inner.style.transform = `scale(${k})`;
+    box.style.height = inner.offsetHeight * k + 'px';
+  }
+}
+
+/* ── reveal + count-up ── */
+const io = new IntersectionObserver(es => {
+  for (const e of es) if (e.isIntersecting) {
+    e.target.classList.add('in');
+    $$('[data-count]', e.target).forEach(countUp);
+    io.unobserve(e.target);
+  }
+}, { threshold: .14, rootMargin: '0px 0px -6% 0px' });
+$$('.rv').forEach(n => io.observe(n));
+function countUp(n) {
+  const to = +n.dataset.count, from = +(n.dataset.from || 0);
+  if (reduce) { n.textContent = to; return; }
+  const t0 = performance.now(), dur = 1500;
+  (function tick(now) {
+    const t = clamp((now - t0) / dur);
+    n.textContent = Math.round(from + (to - from) * easeOut(t));
+    if (t < 1) requestAnimationFrame(tick);
+  })(t0);
+}
+
+/* ── nav ── */
+const nav = $('#nav'), progress = $('#progress');
+const links = $$('.nav-links a'), targets = links.map(a => $(a.getAttribute('href')));
+const side = $('#side'), sideLinks = $$('#side a'), sideTargets = sideLinks.map(a => $(a.getAttribute('href')));
+const [sideUp, sideDown] = $$('.side-arrow'), outro = $('#outro'), CYAN = new Set(['overview']);
+let sideCur = 0;
+function onScrollNav() {
+  const y = scrollY, max = document.documentElement.scrollHeight - innerHeight;
+  nav.classList.toggle('stuck', y > 40);
+  progress.style.transform = `scaleX(${max > 0 ? y / max : 0})`;
+  let cur = -1;
+  targets.forEach((t, i) => { if (t.getBoundingClientRect().top < innerHeight * .4) cur = i; });
+  links.forEach((a, i) => a.classList.toggle('on', i === cur));
+  const mid = innerHeight * .5;
+  sideCur = 0;
+  sideTargets.forEach((t, i) => { if (t.getBoundingClientRect().top <= mid) sideCur = i; });
+  sideLinks.forEach((a, i) => { a.classList.toggle('on', i === sideCur); a.ariaCurrent = i === sideCur ? 'true' : null; });
+  side.classList.toggle('on-cyan', outro.getBoundingClientRect().top <= mid || CYAN.has(sideTargets[sideCur].id));
+  sideUp.disabled = y < 8; sideDown.disabled = y > max - 8;
+}
+function goSection(i) {
+  i = clamp(i, 0, sideTargets.length - 1);
+  const t = sideTargets[i], pad = t.id === 'function' ? 0 : parseFloat(getComputedStyle(t).scrollMarginTop) || 0;
+  scrollTo({ top: i === 0 ? 0 : t.getBoundingClientRect().top + scrollY - pad, behavior: reduce ? 'auto' : 'smooth' });
+}
+
+/* ═════════ 1. 로고 인트로: 흩어진 기록이 모여 잠긴다 ═════════ */
+const LOGO = [{"d":"M64.2234 3C69.9872 3 74.6597 7.67249 74.6597 13.4363V30.989C89.4712 33.4321 103.321 41.0405 113.418 53.0783C118.357 58.9662 117.588 67.743 111.7 72.6819C105.812 77.6208 97.0353 76.8513 92.0964 70.9635C82.265 59.2436 66.1532 54.9277 51.7811 60.153C37.3999 65.3884 27.8303 79.0577 27.8301 94.3573C27.8301 109.657 37.4006 123.325 51.7822 128.561C66.1545 133.786 82.2649 129.471 92.0964 117.751C97.0352 111.864 105.812 111.094 111.7 116.033C117.588 120.972 118.357 129.748 113.418 135.636C96.0627 156.327 67.6255 163.936 42.2658 154.713L42.2626 154.712C16.8901 145.476 0 121.359 0 94.3573C0.000151545 67.3556 16.8901 43.2389 42.2626 34.0026L42.2658 34.0016C46.0531 32.6242 49.9096 31.6249 53.7871 30.9859V13.4363C53.7871 7.67249 58.4596 3 64.2234 3Z","fill":"c"},{"d":"M64.2234 77.6105C70.5168 77.6105 75.6191 82.7122 75.6193 89.0055C75.6193 95.2989 70.5169 100.401 64.2234 100.401C57.9302 100.401 52.8285 95.2988 52.8285 89.0055C52.8287 82.7123 57.9303 77.6107 64.2234 77.6105Z","fill":"c"},{"d":"M55.6793 109.125L57 97.6759H71.4468L72.7675 109.125C72.9171 110.421 72.1647 111.591 71.1809 111.591H57.2658C56.282 111.591 55.5297 110.421 55.6793 109.125Z","fill":"c"},{"d":"M152.272 28.2236C159.709 28.2236 165.738 34.2527 165.738 41.6898V125.595H230.529C237.966 125.595 243.995 131.624 243.995 139.061C243.995 146.498 237.966 152.527 230.529 152.527H152.272C144.835 152.527 138.806 146.498 138.805 139.061V41.6898C138.805 34.2527 144.835 28.2236 152.272 28.2236Z","fill":"#1A1C1C"},{"d":"M313.398 27.1878C348.87 27.1878 377.621 55.939 377.621 91.4112C377.621 126.884 348.87 155.635 313.398 155.635C277.925 155.635 249.174 126.884 249.174 91.4112C249.175 55.939 277.925 27.1878 313.398 27.1878ZM313.398 53.9651C293.296 53.9651 275.952 71.3091 275.952 91.4112C275.952 111.513 293.295 128.857 313.398 128.857C333.5 128.857 350.844 111.513 350.844 91.4112C350.844 71.3091 333.5 53.9651 313.398 53.9651Z","fill":"#1A1C1C","rule":"evenodd"},{"d":"M313.772 78.6736C321.073 78.6736 326.992 84.5919 326.992 91.8925C326.992 99.1934 321.073 105.112 313.772 105.112C306.471 105.112 300.553 99.1932 300.553 91.8925C300.553 84.592 306.471 78.6739 313.772 78.6736Z","fill":"o"},{"d":"M486.989 33.9946C493.096 29.75 501.488 31.2599 505.733 37.3662C509.978 43.473 508.468 51.865 502.361 56.1099L462.004 84.1621L504.854 133.603C509.725 139.223 509.117 147.728 503.497 152.599C497.877 157.47 489.373 156.862 484.502 151.242L439.763 99.6231L423.202 111.135V142.423C423.202 149.86 417.173 155.889 409.736 155.889C402.299 155.889 396.27 149.86 396.27 142.423V104.328C396.267 104.191 396.268 104.054 396.27 103.917V45.0523C396.27 37.6153 402.299 31.5861 409.736 31.5861C417.173 31.5861 423.202 37.6153 423.202 45.0523V78.3343L486.989 33.9946Z","fill":"#1A1C1C"}];
+const hero = $('#hero'), canvas = $('#heroCanvas'), logoBtn = $('#heroLogo');
+const ctx = canvas.getContext('2d');
+let pRaf = 0;
+const GLYPHS = ['0', '1'];
+const TAGS = ['계정', '권한', '위치', '사진', '신분증', 'ID', 'PW', 'OTP', '@', '결제', '쿠키', '연락처'];
+const TAG_FONT = '700 13px "LINE Seed Sans KR",sans-serif';
+const glyph = () => GLYPHS[(Math.random() * GLYPHS.length) | 0];
+const GLYPH_FONT = '700 9px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace';
+
+function buildParticles(fine) {
+  const hr = hero.getBoundingClientRect(), lr = logoBtn.getBoundingClientRect();
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  canvas.width = hr.width * dpr; canvas.height = hr.height * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const s = lr.width / 508.144;
+  const ow = Math.ceil(lr.width), oh = Math.ceil(158.584 * s);
+  const off = document.createElement('canvas'); off.width = ow; off.height = oh;
+  const o = off.getContext('2d', { willReadFrequently: true });
+  o.scale(s, s);
+  const gC = o.createLinearGradient(16.67, 25.23, 123.35, 105.23);
+  gC.addColorStop(0, '#01BED7'); gC.addColorStop(1, '#51E5F5');
+  const gO = o.createLinearGradient(249.17, 27.19, 377.62, 155.64);
+  gO.addColorStop(0, '#01BED7'); gO.addColorStop(1, '#51E5F5');
+  for (const p of LOGO) {
+    o.fillStyle = p.fill === 'c' ? gC : p.fill === 'o' ? gO : p.fill;
+    o.fill(new Path2D(p.d), p.rule || 'nonzero');
+  }
+  const data = o.getImageData(0, 0, ow, oh).data;
+  const step = fine ? Math.max(1.5, lr.width / 280) : Math.max(2.4, lr.width / (innerWidth < 700 ? 95 : 135));
+  const ox = lr.left - hr.left, oy = lr.top - hr.top;
+  const ps = [];
+  for (let y = step / 2; y < oh; y += step) for (let x = step / 2; x < ow; x += step) {
+    const i = ((y | 0) * ow + (x | 0)) * 4;
+    if (data[i + 3] < 130) continue;
+    const a = Math.random() * Math.PI * 2, r = Math.random();
+    /* 시작 위치: 화면 전체가 아니라 로고 둘레의 좁은 띠 안 */
+    const sa = Math.random() * Math.PI * 2, sr = 30 + Math.pow(Math.random(), 1.6) * 110;
+    ps.push({
+      tx: ox + x, ty: oy + y,
+      sx: ox + x + Math.cos(sa) * sr * 1.25, sy: oy + y + Math.sin(sa) * sr * .8,
+      vx: Math.cos(a) * (3 + r * 8), vy: Math.sin(a) * (3 + r * 8),
+      delay: Math.random() * .55 + (x / ow) * .35,
+      bend: (Math.random() - .5) * 50,
+      c: `rgb(${data[i]},${data[i + 1]},${data[i + 2]})`,
+      g: glyph(), gl: ps.length % 3 === 0,
+      size: step * (.55 + Math.random() * .5)
+    });
+  }
+  return { ps, w: hr.width, h: hr.height, step };
+}
+
+let introOn = false, hov = null, hovRaf = 0;
+const mouse = { x: -9999, y: -9999, near: false };
+const REPEL = 95;
+
+function playParticles() {
+  cancelAnimationFrame(pRaf);
+  cancelAnimationFrame(hovRaf); hovRaf = 0;
+  const copy = $('.hero-copy');
+  if (!copy.classList.contains('go')) setTimeout(() => $$('.hero-stats [data-count]').forEach(countUp), 2100);
+  copy.classList.add('go');
+  if (reduce) { logoBtn.classList.remove('hide'); return; }
+  introOn = true; logoBtn.classList.remove('instant');
+  const { ps, w, h, step } = buildParticles();
+  logoBtn.classList.add('hide');
+  canvas.style.transition = 'none'; canvas.style.opacity = 1;
+  const HOLD = .35, FLY = 1.25, END = HOLD + FLY + .9;
+  logoBtn.classList.remove('locked');
+  let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+  for (const p of ps) { x0 = Math.min(x0, p.tx); x1 = Math.max(x1, p.tx); y0 = Math.min(y0, p.ty); y1 = Math.max(y1, p.ty); }
+  const lcx = (x0 + x1) / 2, lcy = (y0 + y1) / 2, lw = x1 - x0, lh = y1 - y0;
+  const tags = TAGS.map((word, i) => {
+    const to = ps[(Math.random() * ps.length) | 0], a = i / TAGS.length * 6.283 + Math.random() * .4;
+    return { word, tx: to.tx, ty: to.ty, ph: Math.random() * 6, delay: Math.random() * .45,
+      sx: clamp(lcx + Math.cos(a) * (lw / 2 + 50 + Math.random() * 70), 30, w - 30),
+      sy: clamp(lcy + Math.sin(a) * (lh / 2 + 45 + Math.random() * 55), 84, h - 20) };
+  });
+  const t0 = performance.now();
+  let shown = false;
+  (function frame(now) {
+    const t = (now - t0) / 1000;
+    ctx.clearRect(0, 0, w, h);
+    ctx.font = GLYPH_FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    for (const p of ps) {
+      const drift = Math.min(t, HOLD + p.delay);
+      const px = p.sx + p.vx * drift, py = p.sy + p.vy * drift;
+      const e = easeInOut(clamp((t - HOLD - p.delay) / FLY));
+      const nx = -(p.ty - py), ny = p.tx - px, nl = Math.hypot(nx, ny) || 1;
+      const arc = Math.sin(e * Math.PI) * p.bend;
+      const x = px + (p.tx - px) * e + nx / nl * arc;
+      const y = py + (p.ty - py) * e + ny / nl * arc;
+      ctx.fillStyle = p.c;
+      if (e < .82) {
+        if (!p.gl) continue;
+        if (Math.random() < .012) p.g = glyph();
+        ctx.globalAlpha = clamp(t / .5) * (.4 + .6 * e);
+        ctx.fillText(p.g, x, y);
+      } else {
+        const k = (e - .82) / .18, sz = step * (.45 + .6 * k);
+        ctx.globalAlpha = .6 + .4 * k;
+        ctx.fillRect(x - sz / 2, y - sz / 2, sz, sz);
+      }
+    }
+    ctx.font = TAG_FONT; ctx.fillStyle = '#0B8FA0';
+    for (const g of tags) {
+      const e = easeInOut(clamp((t - HOLD - g.delay) / FLY));
+      ctx.globalAlpha = clamp(t / .4) * (1 - clamp((e - .65) / .35));
+      ctx.fillText(g.word, g.sx + (g.tx - g.sx) * e, g.sy + (g.ty - g.sy) * e + Math.sin(t * 2.2 + g.ph) * 4 * (1 - e));
+    }
+    if (!shown && t > HOLD + FLY + .7) {
+      shown = true;
+      logoBtn.classList.remove('hide'); logoBtn.classList.add('locked');
+      canvas.style.transition = ''; canvas.style.opacity = 0;
+    }
+    if (t < END + .7) pRaf = requestAnimationFrame(frame);
+    else { ctx.clearRect(0, 0, w, h); introOn = false; }
+  })(t0);
+}
+logoBtn.addEventListener('click', playParticles);
+
+/* 커서 주변 입자 흩어짐 */
+function hoverStart() {
+  if (introOn || reduce || hovRaf) return;
+  const hr = hero.getBoundingClientRect(), lr = logoBtn.getBoundingClientRect();
+  const key = [lr.width, hr.width, hr.height].map(Math.round).join();
+  if (!hov || hov.key !== key) {
+    const b = buildParticles(true);
+    hov = { key, step: b.step, w: b.w, h: b.h, ps: b.ps.map(p => ({ x: p.tx, y: p.ty, tx: p.tx, ty: p.ty, vx: 0, vy: 0, c: p.c, g: p.g, gl: p.gl })) };
+  }
+  logoBtn.classList.add('instant', 'hide');
+  canvas.style.transition = 'none'; canvas.style.opacity = 1;
+  hovRaf = requestAnimationFrame(hoverFrame);
+}
+function hoverFrame() {
+  const { ps, step, w, h } = hov, s = step + .7, R2 = REPEL * REPEL;
+  ctx.globalAlpha = 1; ctx.clearRect(0, 0, w, h);
+  let moving = false;
+  ctx.font = GLYPH_FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  for (const p of ps) {
+    if (mouse.near) {
+      const dx = p.x - mouse.x, dy = p.y - mouse.y, d2 = dx * dx + dy * dy;
+      if (d2 < R2) {
+        const d = Math.sqrt(d2) || 1, f = (1 - d / REPEL) ** 2 * 7;
+        p.vx += dx / d * f + (Math.random() - .5) * .8;
+        p.vy += dy / d * f + (Math.random() - .5) * .8;
+      }
+    }
+    p.vx = (p.vx + (p.tx - p.x) * .055) * .86;
+    p.vy = (p.vy + (p.ty - p.y) * .055) * .86;
+    p.x += p.vx; p.y += p.vy;
+    if (Math.abs(p.x - p.tx) > .35 || Math.abs(p.y - p.ty) > .35) moving = true;
+    const far = Math.abs(p.x - p.tx) + Math.abs(p.y - p.ty);
+    ctx.fillStyle = p.c;
+    if (far < 5) { ctx.globalAlpha = 1; ctx.fillRect(p.x - s / 2, p.y - s / 2, s, s); }
+    else if (p.gl) {
+      if (Math.random() < .05) p.g = glyph();
+      ctx.globalAlpha = clamp(1.15 - far / 150, .25, 1); ctx.fillText(p.g, p.x, p.y);
+    } else if (far < 16) { ctx.globalAlpha = 1 - far / 16; ctx.fillRect(p.x - s / 2, p.y - s / 2, s, s); }
+  }
+  if (mouse.near || moving) hovRaf = requestAnimationFrame(hoverFrame);
+  else { hovRaf = 0; logoBtn.classList.remove('hide'); ctx.clearRect(0, 0, w, h); }
+}
+
+/* Hero 폰: 포인터 + 스크롤 패럴랙스 */
+const art = $('#heroArt');
+let ax = 0, ay = 0, cx = 0, cy = 0, artOn = false;
+function artLoop() {
+  cx += (ax - cx) * .07; cy += (ay - cy) * .07;
+  const sy = Math.min(scrollY, innerHeight) * .06;
+  art.style.transform = `translate3d(${cx * -18}px,${cy * -12 - sy}px,0) rotate(${cx * .6}deg)`;
+  if (Math.abs(ax - cx) > .001 || Math.abs(ay - cy) > .001) requestAnimationFrame(artLoop); else artOn = false;
+}
+function kickArt() { if (!artOn && !reduce) { artOn = true; requestAnimationFrame(artLoop); } }
+hero.addEventListener('pointermove', e => {
+  if (e.pointerType === 'touch') return;
+  const r = hero.getBoundingClientRect();
+  ax = (e.clientX - r.left) / r.width - .5; ay = (e.clientY - r.top) / r.height - .5; kickArt();
+  const l = logoBtn.getBoundingClientRect();
+  mouse.x = e.clientX - r.left; mouse.y = e.clientY - r.top;
+  mouse.near = e.clientX > l.left - REPEL && e.clientX < l.right + REPEL && e.clientY > l.top - REPEL && e.clientY < l.bottom + REPEL;
+  if (mouse.near) hoverStart();
+});
+hero.addEventListener('pointerleave', () => { ax = ay = 0; mouse.near = false; kickArt(); });
+
+/* ═════════ 2. 스크롤 고정 폰 시퀀스 ═════════ */
+const seq = $('#function'), seqPhone = $('#seqPhone'), seqBar = $('#seqBar');
+const seqImgs = $$('.phone-screen img', seqPhone), seqItems = $$('.seq-item'), seqTabs = $$('.seq-tabs button');
+const PAN = [0, 1, 0, .62, 0];
+let seqIdx = 0;
+function onScrollSeq() {
+  const r = seq.getBoundingClientRect();
+  const span = r.height - innerHeight;
+  if (r.top > innerHeight || r.bottom < 0) return;
+  const p = clamp(-r.top / span);
+  const f = Math.min(4.9999, p * 5), idx = f | 0, t = f - idx;
+  seqBar.style.transform = `scaleX(${p})`;
+  if (idx !== seqIdx) {
+    seqItems.forEach((n, i) => { n.classList.toggle('on', i === idx); n.classList.toggle('past', i < idx); });
+    seqImgs.forEach((n, i) => n.classList.toggle('on', i === idx));
+    seqTabs.forEach((n, i) => { n.classList.toggle('on', i === idx); n.setAttribute('aria-selected', i === idx); });
+    seqIdx = idx;
+  }
+  const img = seqImgs[idx], over = img.offsetHeight - img.parentElement.clientHeight;
+  if (over > 2) img.style.transform = `translate3d(0,${-over * PAN[idx] * easeInOut(clamp((t - .12) / .76))}px,0)`;
+  if (!reduce) {
+    const ry = 24 * Math.cos(Math.PI * f), enter = clamp((r.top / innerHeight) + 1, 0, 1);
+    seqPhone.style.transform = `translateY(${enter * 30}px) rotateX(${4 + enter * 14}deg) rotateY(${ry}deg) rotateZ(${ry * -.06}deg)`;
+  }
+}
+function goTab(i) {
+  const top = seq.getBoundingClientRect().top + scrollY;
+  scrollTo({ top: top + (i + .5) / 5 * (seq.offsetHeight - innerHeight), behavior: reduce ? 'auto' : 'smooth' });
+}
+seqTabs.forEach((b, i) => b.addEventListener('click', () => goTab(i)));
+sideLinks.forEach((a, i) => a.addEventListener('click', e => { e.preventDefault(); goSection(i); }));
+/* 화살표: 고정된 폰 시퀀스 안에서는 탭을 한 칸씩, 그 밖에서는 섹션 단위로 이동 */
+$$('.side-arrow').forEach(b => b.addEventListener('click', () => {
+  const dir = +b.dataset.dir, r = seq.getBoundingClientRect();
+  const pinned = r.top <= 1 && r.bottom >= innerHeight - 1;
+  if (pinned && seqIdx + dir >= 0 && seqIdx + dir <= 4) return goTab(seqIdx + dir);
+  if (dir < 0 && sideTargets[sideCur].getBoundingClientRect().top < -40) return goSection(sideCur);
+  goSection(sideCur + dir);
+}));
+
+/* ═════════ 3. 흐름도 경로 애니메이션 ═════════ */
+/* 노드: [id, 열, 행, 종류(s 시작 · n 화면 · g 오버레이 · e 완료 · d 분기), 이름] / 간선: "ab" = a → b */
+const LANES = [
+  { tab: '시작', sub: '처음 실행부터 첫 분석까지', rows: 2,
+    n: [['a', 0, 0, 's', 'CLOK 시작'], ['b', 1, 0, 'n', '스플래시 · 온보딩'], ['q', 2, 0, 'd', '계정?'], ['c', 3, 0, 'n', '가입 · 본인 인증'], ['d', 4, 0, 'n', '권한 설정'], ['e', 5, 0, 'n', '개인정보 분석 중'], ['f', 6, 0, 'e', '분석 완료 → 홈'], ['g', 3, 1, 'n', '로그인'], ['h', 4, 1, 'e', '홈 대시보드']],
+    e: 'ab bq qc cd de ef qg gh' },
+  { tab: '홈', sub: '보안 점수에서 바로 정리로', rows: 3,
+    n: [['a', 0, 0, 's', '홈 대시보드'], ['b', 1, 0, 'n', '방치된 계정 관리'], ['q', 2, 0, 'd', '삭제'], ['c', 3, 0, 'n', '개별 삭제 확인'], ['d', 4, 0, 'n', '삭제 중'], ['e', 5, 0, 'e', '삭제 완료'], ['f', 3, 1, 'g', '일괄 삭제 확인'], ['g', 4, 1, 'n', '일괄 삭제 중'], ['h', 5, 1, 'e', '일괄 삭제 완료'], ['i', 1, 2, 'n', '마이페이지 · 설정'], ['j', 2, 2, 'g', '계정 · 보안 설정']],
+    e: 'ab bq qc cd de qf fg gh ai ij' },
+  { tab: '기록', sub: '서비스 · 기기 속 기록 찾기', rows: 3,
+    n: [['a', 0, 0, 's', '디지털 기록 관리'], ['b', 1, 0, 'n', '연결된 서비스'], ['c', 2, 0, 'n', '서비스 상세'], ['q', 3, 0, 'd', '조치'], ['d', 4, 0, 'n', '연결 해제'], ['e', 5, 0, 'e', '해제 완료'], ['f', 4, 1, 'n', '보안 조치'], ['g', 5, 1, 'e', '조치 완료'], ['h', 1, 2, 'n', '기기 내 민감정보 탐지'], ['i', 2, 2, 'g', '신분증 · 금융 상세'], ['j', 3, 2, 'g', '삭제 확인 · 재확인'], ['k', 4, 2, 'n', '삭제 중'], ['l', 5, 2, 'e', '삭제 완료']],
+    e: 'ab bc cq qd de qf fg ah hi ij jk kl' },
+  { tab: '지도', sub: '낯선 접속 발견 → 차단', rows: 2,
+    n: [['a', 0, 0, 's', '접속 위치 지도'], ['q', 1, 0, 'd', '내 접속?'], ['b', 2, 0, 'n', '비정상 접속 상세'], ['c', 3, 0, 'n', '연결 차단 중'], ['d', 4, 0, 'e', '연결 차단 완료'], ['e', 2, 1, 'n', '내 접속 확인됨'], ['f', 3, 1, 'g', '정상 접속 토스트']],
+    e: 'aq qb bc cd qe ef' },
+  { tab: '알림', sub: '유출 알림 → 비밀번호 변경', rows: 2,
+    n: [['a', 0, 0, 's', '보안 알림 센터'], ['b', 1, 0, 'n', '다크웹 유출 카드'], ['c', 2, 0, 'n', '비밀번호 변경'], ['d', 3, 0, 'n', '변경 중'], ['e', 4, 0, 'e', '변경 완료 → 제자리로'], ['f', 1, 1, 'g', '알림 활성화'], ['g', 2, 1, 'g', '알림 켜짐 토스트']],
+    e: 'ab bc cd de af fg' },
+  { tab: '정리', sub: '추천 → 스마트 정리 → 리포트', rows: 2,
+    n: [['a', 0, 0, 's', '정리 추천'], ['b', 1, 0, 'n', '스마트 정리 확인'], ['c', 2, 0, 'g', '정리 방식 선택'], ['d', 3, 0, 'n', '스마트 정리 중'], ['e', 4, 0, 'e', '정리 완료 · 리포트'], ['f', 1, 1, 'n', '앱 권한 취소'], ['g', 2, 1, 'g', '권한 상세'], ['h', 3, 1, 'n', '권한 회수 중'], ['i', 4, 1, 'e', '회수 완료']],
+    e: 'ab bc cd de af fg gh hi' }
+];
+const KIND = { s: 'start', n: '', g: 'ghost', e: 'end', d: 'diamond' };
+const SVGNS = 'http://www.w3.org/2000/svg';
+const NW = 125.1, NH = 40, COL = 147.15, ROW = 52;
+const pathD = a => a.reduce((s, v, i) => s + (i % 2 ? ',' + v : (i ? ' L' : 'M') + v), '');
+const polyLen = a => { let l = 0; for (let i = 2; i < a.length; i += 2) l += Math.hypot(a[i] - a[i - 2], a[i + 1] - a[i - 1]); return l; };
+function pointAt(path, d) {
+  for (let i = 2; i < path.length; i += 2) {
+    const x1 = path[i - 2], y1 = path[i - 1], x2 = path[i], y2 = path[i + 1], l = Math.hypot(x2 - x1, y2 - y1);
+    if (d <= l) return [x1 + (x2 - x1) * d / (l || 1), y1 + (y2 - y1) * d / (l || 1)];
+    d -= l;
+  }
+  return path.slice(-2);
+}
+const flowInner = $('#flowMap .fit-inner'), flowList = $('#flowList');
+const laneCtl = LANES.map(L => {
+  const N = {};
+  for (const [id, c, r, k, label] of L.n) {
+    const dia = k === 'd', x = 170 + COL * c + (dia ? 39.55 : 0), y = ROW * r - (dia ? 3 : 0), w = dia ? 46 : NW, h = dia ? 46 : NH;
+    N[id] = { id, k, label, x, y, w, h, cx: x + w / 2, cy: ROW * r + 20, kids: [], par: null };
+  }
+  const edges = L.e.split(' ').map(s => {
+    const a = N[s[0]], b = N[s[1]]; a.kids.push(b); b.par = a;
+    const ax2 = a.x + a.w, pts = a.cy === b.cy ? [ax2, a.cy, b.x, b.cy] : [ax2, a.cy, (ax2 + b.x) / 2, a.cy, (ax2 + b.x) / 2, b.cy, b.x, b.cy];
+    return { a, b, pts, len: polyLen(pts) };
+  });
+  const lane = el('div', 'lane'), inn = el('div', 'lane-in'); inn.style.height = L.rows * ROW + 'px'; lane.append(inn);
+  inn.append(el('div', 'lane-label', `<b>${L.tab}</b><span>${L.sub}</span>`));
+  const svg = document.createElementNS(SVGNS, 'svg'); svg.setAttribute('width', 1200); svg.setAttribute('height', L.rows * ROW);
+  /* 같은 출발점에서 갈라지는 가지는 줄기를 공유하므로 기본선은 그대로 겹쳐 그린다 */
+  for (const e of edges) {
+    const b = document.createElementNS(SVGNS, 'path'); b.setAttribute('d', pathD(e.pts)); b.setAttribute('class', 'base'); svg.append(b);
+    const c = document.createElementNS(SVGNS, 'circle'); c.setAttribute('cx', e.b.x); c.setAttribute('cy', e.b.cy); c.setAttribute('r', 3); c.setAttribute('class', 'dotend'); svg.append(c);
+  }
+  for (const e of edges) {
+    const p = document.createElementNS(SVGNS, 'path'); p.setAttribute('d', pathD(e.pts)); p.setAttribute('class', 'lit');
+    p.style.strokeDasharray = e.len; p.style.strokeDashoffset = e.len; svg.append(p); e.p = p;
+  }
+  const runner = document.createElementNS(SVGNS, 'circle'); runner.setAttribute('r', 5); runner.setAttribute('class', 'runner'); svg.append(runner);
+  inn.append(svg);
+  for (const n of Object.values(N)) {
+    const b = el('button', 'node ' + KIND[n.k], n.k === 'd' ? `<span>${n.label}</span>` : n.label);
+    b.style.left = n.x + 'px'; b.style.top = n.y + 'px';
+    b.addEventListener('click', () => play(n.id));
+    n.el = b; inn.append(b);
+  }
+  flowInner.append(lane);
+
+  /* 누른 노드를 지나는 경로: 시작 → 그 노드 → 첫 갈래를 따라 끝까지 */
+  function routeVia(id) {
+    let n = N[id || 'a']; const up = [];
+    for (let m = n; m; m = m.par) up.unshift(m);
+    while (n.kids.length) { n = n.kids[0]; up.push(n); }
+    return up;
+  }
+  let raf = 0;
+  function play(via) {
+    cancelAnimationFrame(raf);
+    const nodes = routeVia(via);
+    for (const e of edges) e.p.style.strokeDashoffset = e.len;
+    Object.values(N).forEach(n => n.el.classList.remove('on'));
+    lane.classList.remove('played');
+    /* 경로를 하나의 꺾은선으로 잇고, 노드와 선이 켜질 거리를 계산 */
+    let path = [nodes[0].cx, nodes[0].cy], dist = 0; const marks = [{ n: nodes[0], at: 0 }], segs = [];
+    for (let i = 1; i < nodes.length; i++) {
+      const e = edges.find(x => x.a === nodes[i - 1] && x.b === nodes[i]);
+      dist += nodes[i - 1].w / 2; segs.push({ e, at: dist }); dist += e.len;
+      marks.push({ n: nodes[i], at: dist });
+      path = path.concat(e.pts, [nodes[i].cx, nodes[i].cy]); dist += nodes[i].w / 2;
+    }
+    if (reduce) { marks.forEach(m => m.n.el.classList.add('on')); segs.forEach(s => s.e.p.style.strokeDashoffset = 0); lane.classList.add('played'); return; }
+    lane.classList.add('playing');
+    const total = polyLen(path), dur = total / 430 * 1000, t0 = performance.now();
+    (function frame(now) {
+      const t = clamp((now - t0) / dur), d = total * (t < 1 ? easeInOut(t) * .15 + t * .85 : 1);
+      const [x, y] = pointAt(path, d); runner.setAttribute('cx', x); runner.setAttribute('cy', y);
+      for (const s of segs) s.e.p.style.strokeDashoffset = s.e.len * (1 - clamp((d - s.at) / s.e.len));
+      for (const m of marks) if (d >= m.at) m.n.el.classList.add('on');
+      if (t < 1) raf = requestAnimationFrame(frame);
+      else { lane.classList.remove('playing'); lane.classList.add('played'); }
+    })(t0);
+  }
+
+  /* 좁은 화면용 세로 목록 */
+  const main = routeVia('a'), alt = Object.values(N).filter(n => !main.includes(n));
+  const card = el('article', 'flow-card rv', `<header><b>${L.tab}</b><span>${L.sub}</span></header><ol class="steps">${main.map((n, i) => `<li class="${KIND[n.k]}" style="--n:${i}">${n.label}</li>`).join('')}</ol><div class="alt"><span>다른 경로</span>${alt.map(n => `<i>${n.label}</i>`).join('')}</div>`);
+  flowList.append(card); io.observe(card);
+  return { lane, play };
+});
+const flowIO = new IntersectionObserver(es => {
+  for (const e of es) if (e.isIntersecting) { const c = laneCtl.find(c => c.lane === e.target); setTimeout(() => c.play(), 200); flowIO.unobserve(e.target); }
+}, { threshold: .7 });
+laneCtl.forEach(c => flowIO.observe(c.lane));
+$$('.person').forEach(b => b.addEventListener('click', () => {
+  const c = laneCtl[+b.dataset.lane], wide = innerWidth > 1100;
+  const t = wide ? c.lane : $$('.flow-card')[+b.dataset.lane];
+  scrollTo({ top: t.getBoundingClientRect().top + scrollY - innerHeight * .3, behavior: reduce ? 'auto' : 'smooth' });
+  if (wide) setTimeout(() => c.play(), reduce ? 0 : 900);
+}));
+
+/* ═════════ 4. 스마트 정리 시연 ═════════ */
+const f2 = $('#f2'), cleanBtn = $('#cleanBtn'), scoreEl = $('#score'), gain = $('#gain'), zone = $('.clean-zone'), live = $('#cleanLive');
+const CHIPS = [['방치 계정 12개', 'risk'], ['민감 권한 3개', 'risk'], ['저장 공간 1.5GB', ''], ['신분증 사본', 'risk'], ['금융 OTP', '']];
+let cleaned = false;
+function flyChips() {
+  const all = [...CHIPS, ...Array.from({ length: 14 }, () => ['', 'dot'])];
+  all.forEach(([txt, cls], i) => {
+    const c = el('span', 'chip ' + cls); c.textContent = txt; zone.append(c);
+    const a = (i / all.length) * Math.PI * 2 + Math.random() * .5, r = (cls === 'dot' ? 170 : 250) + Math.random() * 120;
+    const x = Math.cos(a) * r, y = Math.sin(a) * r * .8;
+    c.animate([
+      { transform: `translate(-50%,-50%) translate(${x}px,${y}px) scale(.6)`, opacity: 0 },
+      { transform: `translate(-50%,-50%) translate(${x * .92}px,${y * .92}px) scale(1)`, opacity: 1, offset: .25 },
+      { transform: `translate(-50%,-50%) translate(${x * .8}px,${y * .8}px) scale(1)`, opacity: 1, offset: .5 },
+      { transform: 'translate(-50%,-50%) translate(0,40px) scale(.1)', opacity: 0 }
+    ], { duration: 1300, delay: i * 45, easing: 'cubic-bezier(.6,0,.4,1)', fill: 'both' }).onfinish = () => c.remove();
+  });
+}
+function runClean() {
+  if (cleaned) {
+    cleaned = false; f2.classList.remove('cleaned'); f2.classList.add('idle');
+    scoreEl.textContent = 82; gain.textContent = '정리하면 92점 · ▲10';
+    cleanBtn.textContent = '스마트 정리'; cleanBtn.classList.remove('again'); live.textContent = '';
+    return;
+  }
+  cleanBtn.disabled = true; cleanBtn.textContent = '정리 중…'; f2.classList.remove('idle');
+  const finish = () => {
+    cleaned = true; f2.classList.add('cleaned');
+    gain.textContent = '정리 완료 · ▲10';
+    cleanBtn.disabled = false; cleanBtn.textContent = '다시 해보기'; cleanBtn.classList.add('again');
+    live.textContent = '정리 완료. 보안 점수가 82점에서 92점으로 올랐습니다.';
+  };
+  if (reduce) { scoreEl.textContent = 92; finish(); return; }
+  flyChips();
+  setTimeout(() => {
+    finish();
+    const t0 = performance.now();
+    (function tick(now) {
+      const t = clamp((now - t0) / 1300);
+      scoreEl.textContent = Math.round(82 + 10 * easeOut(t));
+      if (t < 1) requestAnimationFrame(tick);
+    })(t0);
+  }, 1250);
+}
+cleanBtn.addEventListener('click', runClean);
+
+/* ── 스와치: HEX 복사 ── */
+$$('.sw').forEach(b => b.addEventListener('click', async () => {
+  const hex = b.dataset.hex, label = $('span', b);
+  try { await navigator.clipboard.writeText(hex); }
+  catch { const t = el('textarea'); t.value = hex; document.body.append(t); t.select(); try { document.execCommand('copy'); } catch {} t.remove(); }
+  b.classList.add('copied'); label.textContent = '복사됨';
+  setTimeout(() => { b.classList.remove('copied'); label.textContent = hex; }, 1200);
+}));
+
+/* ── 스크롤 / 리사이즈 루프 ── */
+let ticking = false;
+function onScroll() {
+  if (ticking) return; ticking = true;
+  requestAnimationFrame(() => { onScrollNav(); onScrollSeq(); kickArt(); ticking = false; });
+}
+addEventListener('scroll', onScroll, { passive: true });
+let rz = 0;
+addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { fitAll(); onScrollNav(); seqIdx = -1; onScrollSeq(); }, 80); });
+fitAll(); onScrollNav(); seqIdx = -1; onScrollSeq();
+addEventListener('load', () => { fitAll(); onScrollSeq(); });
+(document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(() => { fitAll(); playParticles(); });
+})();
+</script>
+</body>
+</html>

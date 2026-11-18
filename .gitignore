@@ -1,0 +1,8 @@
+# 이전 버전과 그 버전에서만 쓰는 파일
+index-v1.html
+assets/qr.svg
+assets/diamond.svg
+
+# 로컬 도구 설정
+.impeccable/
+.DS_Store
